@@ -1,5 +1,5 @@
 ---
-name: sourcards-flashcards
+name: sourcards-import
 description: SourCards flashcard import skill. Generate spaced-repetition flashcards (制卡/卡片/flashcards/Anki-style Q&A) from notes, articles, transcripts, lectures, or any learning material. Formulate atomic FSRS-ready cards with deck/category, Form A Q&A or Form B cloze, concept tags, aliases, and source quotes; then lint JSON and import or roll back via the SourCards API. Use when the user asks to make cards, generate flashcards, 制卡, 导入卡片, lint cards, or convert study material into reviewable Q&A for SourCards.
 ---
 
@@ -117,11 +117,11 @@ Scripts live in this skill's `scripts/` directory. Resolve the skill root from t
 
 ```bash
 # Canonical monorepo package (source of truth):
-SKILL_ROOT="skills/sourcards-flashcards"   # inside this plugin repo
+SKILL_ROOT="skills/sourcards-import"   # inside this plugin repo
 # or after install / project symlink:
-# SKILL_ROOT=".agents/skills/sourcards-flashcards"
-# SKILL_ROOT=".claude/skills/sourcards-flashcards"
-# SKILL_ROOT="$HOME/.skills-manager/skills/sourcards-flashcards"
+# SKILL_ROOT=".agents/skills/sourcards-import"
+# SKILL_ROOT=".claude/skills/sourcards-import"
+# SKILL_ROOT="$HOME/.skills-manager/skills/sourcards-import"
 # Or use the package bin after install:
 # sourcards-lint-cards cards.json
 

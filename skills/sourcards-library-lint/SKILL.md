@@ -1,6 +1,6 @@
 ---
 name: sourcards-library-lint
-description: Audit an existing SourCards library for deck/category drift, near-duplicates, empty/tiny groups, and uncategorized backlog. Use when the user asks to lint their library, 整理牌组, clean messy decks/categories, find naming drift, or review organization after many imports. Not for pre-import cards.json lint (use sourcards-flashcards).
+description: Audit an existing SourCards library for deck/category drift, near-duplicates, empty/tiny groups, and uncategorized backlog. Use when the user asks to lint their library, 整理牌组, clean messy decks/categories, find naming drift, or review organization after many imports. Not for pre-import cards.json lint (use sourcards-import).
 ---
 
 # SourCards Library Lint
@@ -13,7 +13,7 @@ This skill is the **source of truth** for library organization lint:
 - pure algorithm (`lib/org-lint.mjs`)
 - outer-agent / CLI workflow
 
-Pre-import JSON lint is a different skill: **`sourcards-flashcards`**.
+Pre-import JSON lint is a different skill: **`sourcards-import`**.
 
 ## Read on demand
 
@@ -27,7 +27,7 @@ Pre-import JSON lint is a different skill: **`sourcards-flashcards`**.
 1. **Read-only by default.** Lint reports; it does not merge/rename/delete for the user.
 2. **Prefer canonical existing names** over inventing a second taxonomy.
 3. **Cluster before listing.** Group related issues; do not dump every row as a paragraph.
-4. **Do not confuse with import lint.** `cards.json` formulation errors belong to `sourcards-flashcards`.
+4. **Do not confuse with import lint.** `cards.json` formulation errors belong to `sourcards-import`.
 
 ## Workflow
 
