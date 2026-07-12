@@ -1,38 +1,40 @@
 {
   "name": "@sourcards/skill-flashcards",
   "version": "0.1.0",
-  "description": "SourCards external import skill: generate FSRS flashcards, lint JSON, and import via API. For Codex/Claude Code and other outer agents.",
+  "description": "SourCards Codex plugin / skill pack: formulate FSRS flashcards, lint JSON, and import via API. Primary skill: sourcards-flashcards. For Codex plugins, skills-manager, Claude Code, and other outer agents.",
   "type": "module",
   "license": "MIT",
   "files": [
-    "SKILL.md",
-    "references",
-    "scripts",
+    ".codex-plugin",
+    "skills",
     "README.md",
     "LICENSE"
   ],
   "exports": {
-    ".": "./SKILL.md",
+    ".": "./skills/sourcards-flashcards/SKILL.md",
     "./package.json": "./package.json",
-    "./SKILL.md": "./SKILL.md",
-    "./references/*": "./references/*",
-    "./scripts/*": "./scripts/*"
+    "./SKILL.md": "./skills/sourcards-flashcards/SKILL.md",
+    "./references/*": "./skills/sourcards-flashcards/references/*",
+    "./scripts/*": "./skills/sourcards-flashcards/scripts/*",
+    "./skills/*": "./skills/*"
   },
   "bin": {
-    "sourcards-lint-cards": "./scripts/lint-cards.mjs"
+    "sourcards-lint-cards": "./skills/sourcards-flashcards/scripts/lint-cards.mjs"
   },
   "scripts": {
-    "test": "node scripts/lint-cards.test.mjs",
-    "lint-cards": "node scripts/lint-cards.mjs"
+    "test": "node skills/sourcards-flashcards/scripts/lint-cards.test.mjs",
+    "lint-cards": "node skills/sourcards-flashcards/scripts/lint-cards.mjs"
   },
   "keywords": [
-    "sourcards",
+    "agent-skills",
+    "claude",
+    "codex",
+    "codex-plugin",
     "flashcards",
     "fsrs",
-    "spaced-repetition",
-    "agent-skills",
-    "codex",
-    "claude"
+    "plugin",
+    "sourcards",
+    "spaced-repetition"
   ],
   "repository": {
     "type": "git",
