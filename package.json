@@ -1,0 +1,48 @@
+{
+  "name": "@sourcards/skill-flashcards",
+  "version": "0.1.0",
+  "description": "SourCards external import skill: generate FSRS flashcards, lint JSON, and import via API. For Codex/Claude Code and other outer agents.",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "SKILL.md",
+    "references",
+    "scripts",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./SKILL.md",
+    "./package.json": "./package.json",
+    "./SKILL.md": "./SKILL.md",
+    "./references/*": "./references/*",
+    "./scripts/*": "./scripts/*"
+  },
+  "bin": {
+    "sourcards-lint-cards": "./scripts/lint-cards.mjs"
+  },
+  "scripts": {
+    "test": "node scripts/lint-cards.test.mjs",
+    "lint-cards": "node scripts/lint-cards.mjs"
+  },
+  "keywords": [
+    "sourcards",
+    "flashcards",
+    "fsrs",
+    "spaced-repetition",
+    "agent-skills",
+    "codex",
+    "claude"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2Lavine/skill-flashcards.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/2Lavine/skill-flashcards/issues"
+  },
+  "homepage": "https://github.com/2Lavine/skill-flashcards#readme"
+}
