@@ -91,15 +91,21 @@ Requires `FLASHCARD_API_KEY` for catalog cross-check and import API calls.
 
 ## Develop with the SourCards monorepo
 
-The app monorepo (`fsrs-flashcards`) consumes this repo as a **sibling checkout**:
+The app monorepo (`fsrs-flashcards`) vendors this repo as a **git submodule**:
 
 ```text
-div-skill/
-  skill-flashcards/     ← this plugin repo (SoT)
-  fsrs-flashcards/      ← app monorepo (symlinks / workspace package)
+fsrs-flashcards/
+  packages/skill-flashcards/   ← this plugin repo (submodule SoT)
+  .agents/skills/sourcards-flashcards → packages/skill-flashcards/skills/sourcards-flashcards
 ```
 
-App-side health check: `pnpm skill:check` inside `fsrs-flashcards`.
+After cloning the monorepo:
+
+```bash
+git submodule update --init packages/skill-flashcards
+pnpm install
+pnpm skill:check
+```
 
 ## Versioning
 
