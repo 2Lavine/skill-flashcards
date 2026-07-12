@@ -117,10 +117,10 @@ Scripts live in this skill's `scripts/` directory. Resolve the skill root from t
 
 ```bash
 # Canonical monorepo package (source of truth):
-SKILL_ROOT="packages/skill-flashcards"
-# Claude/Codex skill symlink in this repo:
+SKILL_ROOT="skills/sourcards-flashcards"   # inside this plugin repo
+# or after install / project symlink:
+# SKILL_ROOT=".agents/skills/sourcards-flashcards"
 # SKILL_ROOT=".claude/skills/sourcards-flashcards"
-# User-level install / skills-manager:
 # SKILL_ROOT="$HOME/.skills-manager/skills/sourcards-flashcards"
 # Or use the package bin after install:
 # sourcards-lint-cards cards.json

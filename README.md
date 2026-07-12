@@ -1,50 +1,75 @@
-# @sourcards/skill-flashcards
+# skill-flashcards (SourCards Skills plugin)
 
-SourCards **external import skill** for outer agents (Codex, Claude Code, skills-manager, etc.).
+Codex **plugin** / multi-skill pack for SourCards.
 
-Skill name: **`sourcards-flashcards`**
+- Plugin name: **`skill-flashcards`**
+- Primary skill: **`sourcards-flashcards`**
+- npm package (optional): **`@sourcards/skill-flashcards`**
 
-This repo is the **source of truth** for:
+This repo is the **source of truth** for external agent skills that:
 
-- card formulation rules (`SKILL.md` + `references/`)
-- deck/category discipline mapping
-- pre-import JSON lint (`sourcards-lint-cards`)
-- import / list / rollback API usage
+- formulate atomic FSRS-ready flashcards
+- lint card JSON before import
+- import / list / roll back via the SourCards API
 
 It is **not** the in-app Learning Coach runtime (that lives in the SourCards app monorepo under `packages/agent`).
 
-## Layout
+## Layout (plugin)
 
 ```text
-SKILL.md
-references/
-  format.md
-  quality-rules.md
-  disciplines.md
-  api.md
-scripts/
-  lint-cards.mjs
-  lint-cards.test.mjs
+.codex-plugin/plugin.json      # Codex plugin manifest
+skills/
+  sourcards-flashcards/        # skill name = folder name
+    SKILL.md
+    references/
+      format.md
+      quality-rules.md
+      disciplines.md
+      api.md
+    scripts/
+      lint-cards.mjs
+      lint-cards.test.mjs
+package.json                   # optional npm package + bin
+README.md
+LICENSE
 ```
+
+One plugin can ship many skills under `skills/`. Add a new folder with its own `SKILL.md` when you need another skill.
 
 ## Install
 
-### skills-manager / copy install
+### Codex plugin (preferred for multi-skill)
 
-Point skills-manager at this GitHub repo (or a release tag). It will **copy** into
-`~/.skills-manager/skills/sourcards-flashcards`.
+Install from this repo as a local/personal plugin, or add it to a marketplace that points at the repo root (the directory that contains `.codex-plugin/plugin.json`).
 
-Do **not** symlink that destination back into this repo — copy tools refuse
-destination-inside-source recursion.
-
-### Codex / Claude (project-local)
-
-In a consumer repo, symlink:
+Validate locally:
 
 ```bash
-ln -sfn /path/to/skill-flashcards .agents/skills/sourcards-flashcards
+python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py .
+```
+
+### skills-manager / single-skill copy install
+
+Point skills-manager at the **skill directory** (or a release that exposes it):
+
+```text
+skills/sourcards-flashcards
+```
+
+It will **copy** into `~/.skills-manager/skills/sourcards-flashcards`.
+
+Do **not** symlink that destination back into this repo — copy tools refuse destination-inside-source recursion.
+
+### Project-local symlink (Codex / Claude)
+
+Symlink the **skill folder** (must contain `SKILL.md` at its root):
+
+```bash
+ln -sfn /path/to/skill-flashcards/skills/sourcards-flashcards \
+  .agents/skills/sourcards-flashcards
 # optional compat alias
-ln -sfn /path/to/skill-flashcards .agents/skills/fsrs-flashcards
+ln -sfn /path/to/skill-flashcards/skills/sourcards-flashcards \
+  .agents/skills/fsrs-flashcards
 ```
 
 ### npm (optional)
@@ -57,8 +82,8 @@ sourcards-lint-cards cards.json
 ## Lint
 
 ```bash
-node scripts/lint-cards.mjs cards.json
-node scripts/lint-cards.mjs cards.json --catalog https://sourcard.sourmonkey.xyz
+node skills/sourcards-flashcards/scripts/lint-cards.mjs cards.json
+node skills/sourcards-flashcards/scripts/lint-cards.mjs cards.json --catalog https://sourcard.sourmonkey.xyz
 npm test
 ```
 
@@ -70,12 +95,12 @@ The app monorepo (`fsrs-flashcards`) consumes this repo as a **sibling checkout*
 
 ```text
 div-skill/
-  skill-flashcards/     ← this repo (SoT)
-  fsrs-flashcards/      ← app monorepo (symlinks / pnpm link)
+  skill-flashcards/     ← this plugin repo (SoT)
+  fsrs-flashcards/      ← app monorepo (symlinks / workspace package)
 ```
 
 App-side health check: `pnpm skill:check` inside `fsrs-flashcards`.
 
 ## Versioning
 
-Independent of the app monorepo. Bump this package when skill rules or lint change.
+Independent of the app monorepo. Bump `package.json` and `.codex-plugin/plugin.json` together when skill rules or lint change.

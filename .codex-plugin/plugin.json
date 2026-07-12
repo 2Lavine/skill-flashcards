@@ -1,0 +1,39 @@
+{
+  "name": "skill-flashcards",
+  "version": "0.1.0",
+  "description": "SourCards agent skills for spaced-repetition flashcards: formulate, lint, and import cards via the SourCards API.",
+  "author": {
+    "name": "SourCards",
+    "url": "https://github.com/2Lavine"
+  },
+  "homepage": "https://github.com/2Lavine/skill-flashcards",
+  "repository": "https://github.com/2Lavine/skill-flashcards",
+  "license": "MIT",
+  "keywords": [
+    "sourcards",
+    "flashcards",
+    "fsrs",
+    "spaced-repetition",
+    "agent-skills",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SourCards Skills",
+    "shortDescription": "Flashcard formulation, lint, and import skills",
+    "longDescription": "SourCards plugin pack for outer agents. Ships the sourcards-flashcards import skill (and room for more): formulate atomic FSRS-ready cards, lint JSON, and import or roll back via the SourCards API. Separate from the in-app Learning Coach runtime.",
+    "developerName": "SourCards",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/2Lavine/skill-flashcards",
+    "defaultPrompt": [
+      "Make flashcards from this note and lint before import",
+      "Lint this cards.json against SourCards rules",
+      "Import these cards into SourCards via the API"
+    ],
+    "brandColor": "#0F766E"
+  }
+}
