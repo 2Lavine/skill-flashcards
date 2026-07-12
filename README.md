@@ -18,23 +18,28 @@ It is **not** the in-app Learning Coach runtime (that lives in the SourCards app
 
 ```text
 .codex-plugin/plugin.json      # Codex plugin manifest
+lib/
+  org-lint.mjs                 # shared library-organization core (app + CLI)
 skills/
-  sourcards-flashcards/        # skill name = folder name
-    SKILL.md
-    references/
-      format.md
-      quality-rules.md
-      disciplines.md
-      api.md
-    scripts/
-      lint-cards.mjs
-      lint-cards.test.mjs
-package.json                   # optional npm package + bin
+  sourcards-flashcards/        # pre-import formulate + JSON lint
+  sourcards-library-lint/      # post-import library drift lint (SoT)
+package.json                   # optional npm package + bins
 README.md
 LICENSE
 ```
 
-One plugin can ship many skills under `skills/`. Add a new folder with its own `SKILL.md` when you need another skill.
+Skills:
+
+| Skill | Purpose |
+|-------|---------|
+| `sourcards-flashcards` | Formulate cards, lint `cards.json`, import |
+| `sourcards-library-lint` | Lint existing decks/categories (shared core) |
+
+Shared code:
+
+```js
+import { lintLibraryOrganization } from '@sourcards/skill-flashcards/org-lint';
+```
 
 ## Install
 
@@ -62,12 +67,14 @@ Do **not** symlink that destination back into this repo — copy tools refuse de
 
 ### Project-local symlink (Codex / Claude)
 
-Symlink the **skill folder** (must contain `SKILL.md` at its root):
+Symlink each **skill folder** (must contain `SKILL.md` at its root):
 
 ```bash
 ln -sfn /path/to/skill-flashcards/skills/sourcards-flashcards \
   .agents/skills/sourcards-flashcards
-# optional compat alias
+ln -sfn /path/to/skill-flashcards/skills/sourcards-library-lint \
+  .agents/skills/sourcards-library-lint
+# optional compat alias for the import skill
 ln -sfn /path/to/skill-flashcards/skills/sourcards-flashcards \
   .agents/skills/fsrs-flashcards
 ```
@@ -82,8 +89,14 @@ sourcards-lint-cards cards.json
 ## Lint
 
 ```bash
+# pre-import JSON
 node skills/sourcards-flashcards/scripts/lint-cards.mjs cards.json
 node skills/sourcards-flashcards/scripts/lint-cards.mjs cards.json --catalog https://sourcard.sourmonkey.xyz
+
+# library organization (snapshot or live API)
+node skills/sourcards-library-lint/scripts/lint-library.mjs snapshot.json
+node skills/sourcards-library-lint/scripts/lint-library.mjs --base https://sourcard.sourmonkey.xyz
+
 npm test
 ```
 
@@ -97,6 +110,7 @@ The app monorepo (`fsrs-flashcards`) vendors this repo as a **git submodule**:
 fsrs-flashcards/
   packages/skill-flashcards/   ← this plugin repo (submodule SoT)
   .agents/skills/sourcards-flashcards → packages/skill-flashcards/skills/sourcards-flashcards
+  .agents/skills/sourcards-library-lint → packages/skill-flashcards/skills/sourcards-library-lint
 ```
 
 After cloning the monorepo:
