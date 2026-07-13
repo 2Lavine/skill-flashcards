@@ -23,7 +23,12 @@
     "./references/*": "./skills/sourcards-import/references/*",
     "./scripts/*": "./skills/sourcards-import/scripts/*",
     "./skills/*": "./skills/*",
-    "./lib/*": "./lib/*"
+    "./lib/*": "./lib/*",
+    "./catalog-name": {
+      "types": "./lib/catalog-name.d.ts",
+      "import": "./lib/catalog-name.mjs",
+      "default": "./lib/catalog-name.mjs"
+    }
   },
   "bin": {
     "sourcards-lint-cards": "./skills/sourcards-import/scripts/lint-cards.mjs",
