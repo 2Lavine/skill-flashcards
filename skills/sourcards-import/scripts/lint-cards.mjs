@@ -187,16 +187,26 @@ data.cards.forEach((c, idx) => {
   }
 
   // Japanese / listening media soft checks (markdown-backed; never blocking).
+  // Keep genre guidance aligned with review-core listen-first chrome:
+  // type:listening + question audio => hide transcript face-down.
   const q = typeof c.question === 'string' ? c.question : '';
   const a = typeof c.answer === 'string' ? c.answer : '';
   const cardHasAudio = hasMarkdownAudio(q) || hasMarkdownAudio(a);
+  const questionHasAudio = hasMarkdownAudio(q);
   const isListening = typeTags.includes('listening');
   const isVocab = typeTags.includes('vocab');
+  const isReading = typeTags.includes('reading');
   const isJa = hasJapaneseLangTag(tags);
+  const genreHits = ['vocab', 'listening', 'reading'].filter((g) => typeTags.includes(g));
+  if (genreHits.length > 1) {
+    warn(`${tag}: stacked genre tags (${genreHits.map((g) => 'type:' + g).join(' + ')}) — pick one primary of type:vocab / type:listening / type:reading so Browse filters and Review listen-first stay consistent.`);
+  }
   if (isListening && !cardHasAudio) {
     warn(`${tag}: tagged type:listening but has no <audio src="…"> in question/answer — embed markdown audio or drop the listening tag.`);
+  } else if (isListening && !questionHasAudio) {
+    warn(`${tag}: type:listening should put the prompt <audio src="…"> on the question (answer audio alone skips face-down listen-first).`);
   }
-  if ((isListening || isVocab || cardHasAudio) && !isJa) {
+  if ((isListening || isVocab || isReading || cardHasAudio) && !isJa) {
     // Genre/media cards should declare language for JA study routing/lint helpers.
     warn(`${tag}: media/vocab/listening card missing lang:ja (or lang:jp / ja) — add a language tag for Japanese study batches.`);
   }

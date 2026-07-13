@@ -120,20 +120,47 @@ test('unknown type tag → warning, exit 0', () => {
 
 // ---- Japanese / listening media --------------------------------------------
 
-test('type:vocab + type:listening are known genre tags', () => {
-  const { code, out } = lint({
+test('type:vocab and type:listening are known genre tags when used alone', () => {
+  const vocab = lint({
     deck: '日语',
     source: 'https://ex.com/ja',
     cards: [{
-      question: 'What does this mean?\n<audio src="https://cdn.example/neko.mp3" controls></audio>',
+      question: '「ねこ」是什么意思？\n<audio src="https://cdn.example/neko.mp3" controls></audio>',
       answer: '猫（ねこ）',
-      tags: ['lang:ja', 'type:vocab', 'type:listening', 'alias:猫'],
+      tags: ['lang:ja', 'type:vocab', 'alias:猫'],
       category: '名词',
     }],
   });
+  assert.equal(vocab.code, 0);
+  assert.match(vocab.out, /lint clean/);
+  assert.doesNotMatch(vocab.out, /unknown type tag/);
+
+  const listening = lint({
+    deck: '日语',
+    source: 'https://ex.com/ja',
+    cards: [{
+      question: '<audio src="https://cdn.example/neko.mp3" controls></audio>',
+      answer: '猫（ねこ）',
+      tags: ['lang:ja', 'type:listening', 'alias:猫'],
+      category: '听解',
+    }],
+  });
+  assert.equal(listening.code, 0);
+  assert.match(listening.out, /lint clean/);
+  assert.doesNotMatch(listening.out, /unknown type tag/);
+});
+
+test('stacked type:vocab + type:listening → warning, exit 0', () => {
+  const { code, out } = lint({
+    deck: '日语',
+    cards: [{
+      question: '<audio src="https://cdn.example/neko.mp3" controls></audio>',
+      answer: '猫',
+      tags: ['lang:ja', 'type:vocab', 'type:listening', 'alias:猫'],
+    }],
+  });
   assert.equal(code, 0);
-  assert.match(out, /lint clean/);
-  assert.doesNotMatch(out, /unknown type tag/);
+  assert.match(out, /stacked genre tags/);
 });
 
 test('type:listening without audio → warning, exit 0', () => {
@@ -147,6 +174,19 @@ test('type:listening without audio → warning, exit 0', () => {
   });
   assert.equal(code, 0);
   assert.match(out, /type:listening but has no <audio/);
+});
+
+test('type:listening with answer-only audio → warning, exit 0', () => {
+  const { code, out } = lint({
+    deck: '日语',
+    cards: [{
+      question: 'Listen carefully',
+      answer: '猫 <audio src="https://cdn.example/neko.mp3" controls></audio>',
+      tags: ['lang:ja', 'type:listening'],
+    }],
+  });
+  assert.equal(code, 0);
+  assert.match(out, /prompt <audio .* on the question/);
 });
 
 test('audio without lang tag → warning, exit 0', () => {

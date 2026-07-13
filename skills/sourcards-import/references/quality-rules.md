@@ -25,6 +25,8 @@ Never hide the subject of a definition question inside `{{c1::...}}`.
 - When a diagram would help, note it in the answer: `（建议配图：细胞结构示意图）`.
 - Spatial relations can be described in words when no image is available.
 - For Japanese / listening study, embed real media in markdown (`<audio …>` / `![alt](url)`); see format.md "Japanese / listening media".
+- Pick one primary genre: `type:vocab` (text stays visible) vs `type:listening` (listen-first; hide transcript face-down). Do not stack both.
+- Listening fronts should put prompt audio on the question; keep transcripts / meanings on the answer.
 
 ## 5. Mnemonics
 
