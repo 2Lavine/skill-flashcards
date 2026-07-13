@@ -24,6 +24,10 @@
 // Exit codes: 0 = clean or warnings only, 1 = blocking error(s), 2 = bad usage.
 
 import { readFileSync } from 'node:fs';
+import {
+  findNearCatalogNames,
+  normalizeCatalogName,
+} from '../../../lib/catalog-name.mjs';
 
 const errors = [];   // blocking — import would fail or data would be corrupt
 const warnings = []; // quality drift — import still succeeds
@@ -212,40 +216,13 @@ if (catalogBase && parsed && data.deck) {
 report();
 process.exit(errors.length ? 1 : 0);
 
-// Normalize for fuzzy compare: strip whitespace/punctuation, casefold. Two
-// names that normalize equal are almost certainly the same field spelled/spaced
-// differently — exactly the drift we want to surface.
+// Catalog name matching SSOT: packages/skill-flashcards/lib/catalog-name.mjs
+// (mirrors monorepo @sourcards/shared catalog-name).
 function norm(s) {
-  return String(s).toLowerCase().replace(/[\s/·・:：_\-—、,，.。]/g, '').trim();
-}
-// Cheap near-match: catches spelling/spacing drift of the SAME name via
-// containment, shared prefix, or edit distance ≤1 on normalized forms (e.g.
-// "心里学" vs "心理学", "博弈 论" vs "博弈论"). It does NOT catch synonyms —
-// "对策论" vs "博弈论" are the same field by meaning but far apart as strings;
-// only discipline knowledge (disciplines.md) resolves that, not this check.
-function editDistance(a, b) {
-  const m = a.length, n = b.length;
-  if (Math.abs(m - n) > 1) return 2; // we only care about ≤1; short-circuit
-  const dp = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-  for (let i = 1; i <= m; i++)
-    for (let j = 1; j <= n; j++)
-      dp[i][j] = a[i - 1] === b[j - 1]
-        ? dp[i - 1][j - 1]
-        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
-  return dp[m][n];
+  return normalizeCatalogName(s);
 }
 function nearMatches(name, pool) {
-  const nn = norm(name);
-  if (!nn) return [];
-  return pool.filter((p) => {
-    const np = norm(p);
-    if (!np || np === nn) return false;
-    if (np.includes(nn) || nn.includes(np)) return true;
-    const short = Math.min(nn.length, np.length);
-    if (short >= 2 && nn.slice(0, short) === np.slice(0, short)) return true;
-    return editDistance(nn, np) <= 1; // single-char typo drift
-  });
+  return findNearCatalogNames(name, pool);
 }
 
 async function catalogCrossCheck(base) {
