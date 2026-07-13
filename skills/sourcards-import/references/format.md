@@ -29,7 +29,7 @@
 | `cards` | Yes | Array of card objects (min 1). |
 | `cards[].question` | Yes | Front text. Cloze only via `{{cN::...}}` in Form B. |
 | `cards[].answer` | Yes | Back text. Multi-cloze answers `;`-separated, in cloze-id order. |
-| `cards[].tags` | No | 2–4 topical tags plus type/alias tags. `type:concept` / `type:entity` / optional `type:normal`. Every concept/entity card needs ≥1 `alias:<name>`. |
+| `cards[].tags` | No | 2–4 topical tags plus type/alias tags. Hierarchy: `type:concept` / `type:entity` / optional `type:normal`. Genre (JA etc.): `type:vocab` / `type:listening` / `type:reading`. Every concept/entity card needs ≥1 `alias:<name>`. |
 | `cards[].category` | No | Second-level discipline under the deck — single Chinese name, **no `/`**. |
 | `cards[].source_quote` | No | Exact supporting sentence from the source. Shown under a revealed card. |
 

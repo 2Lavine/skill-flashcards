@@ -118,6 +118,50 @@ test('unknown type tag → warning, exit 0', () => {
   assert.match(out, /unknown type tag "type:conept"/);
 });
 
+// ---- Japanese / listening media --------------------------------------------
+
+test('type:vocab + type:listening are known genre tags', () => {
+  const { code, out } = lint({
+    deck: '日语',
+    source: 'https://ex.com/ja',
+    cards: [{
+      question: 'What does this mean?\n<audio src="https://cdn.example/neko.mp3" controls></audio>',
+      answer: '猫（ねこ）',
+      tags: ['lang:ja', 'type:vocab', 'type:listening', 'alias:猫'],
+      category: '名词',
+    }],
+  });
+  assert.equal(code, 0);
+  assert.match(out, /lint clean/);
+  assert.doesNotMatch(out, /unknown type tag/);
+});
+
+test('type:listening without audio → warning, exit 0', () => {
+  const { code, out } = lint({
+    deck: '日语',
+    cards: [{
+      question: 'ねこ',
+      answer: 'cat',
+      tags: ['lang:ja', 'type:listening'],
+    }],
+  });
+  assert.equal(code, 0);
+  assert.match(out, /type:listening but has no <audio/);
+});
+
+test('audio without lang tag → warning, exit 0', () => {
+  const { code, out } = lint({
+    deck: '日语',
+    cards: [{
+      question: '<audio src="https://cdn.example/a.mp3" controls></audio>',
+      answer: 'a',
+      tags: ['type:vocab'],
+    }],
+  });
+  assert.equal(code, 0);
+  assert.match(out, /missing lang:ja/);
+});
+
 // ---- clean -----------------------------------------------------------------
 
 test('clean payload → exit 0, single clean line', () => {

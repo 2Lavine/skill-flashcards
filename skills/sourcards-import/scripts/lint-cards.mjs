@@ -146,7 +146,20 @@ if (data.source != null) {
 }
 
 // ---- 5. per-card checks ----------------------------------------------------
-const TYPE_TAGS = new Set(['concept', 'entity', 'normal']);
+// Markdown media tokens (JA study MVP). Keep in sync with review-core card-media
+// convention: <audio src>, markdown images, <img src>. No schema fields.
+function hasMarkdownAudio(md) {
+  return typeof md === 'string' && /<audio\b[^>]*\bsrc\s*=\s*["'][^"']+["']/i.test(md);
+}
+function hasJapaneseLangTag(tags) {
+  return tags.some((t) => {
+    if (typeof t !== 'string') return false;
+    const x = t.trim().toLowerCase();
+    return x === 'lang:ja' || x === 'lang:jp' || x === 'ja' || x === 'japanese';
+  });
+}
+
+const TYPE_TAGS = new Set(['concept', 'entity', 'normal', 'vocab', 'listening', 'reading']);
 data.cards.forEach((c, idx) => {
   const tag = `card[${idx}]`;
   if (!c || typeof c !== 'object') { err(`${tag}: not an object.`); return; }
@@ -166,11 +179,29 @@ data.cards.forEach((c, idx) => {
   const aliases = tags.filter((t) => typeof t === 'string' && t.startsWith('alias:'));
 
   for (const tt of typeTags) {
-    if (!TYPE_TAGS.has(tt)) warn(`${tag}: unknown type tag "type:${tt}" — expected type:concept / type:entity / type:normal.`);
+    if (!TYPE_TAGS.has(tt)) warn(`${tag}: unknown type tag "type:${tt}" — expected type:concept / type:entity / type:normal / type:vocab / type:listening / type:reading.`);
   }
   const isConceptOrEntity = typeTags.includes('concept') || typeTags.includes('entity');
   if (isConceptOrEntity && aliases.length === 0) {
     warn(`${tag}: tagged type:${typeTags.join('/')} but has no "alias:<canonical name>" tag (required for semantic linking).`);
+  }
+
+  // Japanese / listening media soft checks (markdown-backed; never blocking).
+  const q = typeof c.question === 'string' ? c.question : '';
+  const a = typeof c.answer === 'string' ? c.answer : '';
+  const cardHasAudio = hasMarkdownAudio(q) || hasMarkdownAudio(a);
+  const isListening = typeTags.includes('listening');
+  const isVocab = typeTags.includes('vocab');
+  const isJa = hasJapaneseLangTag(tags);
+  if (isListening && !cardHasAudio) {
+    warn(`${tag}: tagged type:listening but has no <audio src="…"> in question/answer — embed markdown audio or drop the listening tag.`);
+  }
+  if ((isListening || isVocab || cardHasAudio) && !isJa) {
+    // Genre/media cards should declare language for JA study routing/lint helpers.
+    warn(`${tag}: media/vocab/listening card missing lang:ja (or lang:jp / ja) — add a language tag for Japanese study batches.`);
+  }
+  if (cardHasAudio && !/<audio\b[^>]*\bcontrols\b/i.test(q + a)) {
+    info(`${tag}: <audio> without controls attribute — review UI still plays via host replay, but controls helps mobile/desktop scrubbing.`);
   }
 
   // Cloze form checks. Form B answers *should* be the deleted term(s).
