@@ -32,8 +32,9 @@
 | `cards[].tags` | No | 2–4 topical tags plus type/alias tags. `type:concept` / `type:entity` / optional `type:normal`. Every concept/entity card needs ≥1 `alias:<name>`. |
 | `cards[].category` | No | Second-level discipline under the deck — single Chinese name, **no `/`**. |
 | `cards[].source_quote` | No | Exact supporting sentence from the source. Shown under a revealed card. |
+| `cards[].studyOrder` | No | 0-based reading order inside this import batch. Prefer emitting `cards[]` already in reading order and omit this field — the server defaults each card to its array index. Set explicitly only when you need to override array order. |
 
-The app derives review priority / hierarchy from `type:*` tags. Do not invent priority fields.
+**Reading order:** emit `cards[]` in the order a learner should first meet the material (foundations → applications). Same-batch reviews stay sticky and sort by `studyOrder`, then `type:*` (concept → entity → normal). Do **not** overload `reviewPriority` for reading order.
 
 ## Concept tags & ordering
 

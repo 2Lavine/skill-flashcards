@@ -94,10 +94,11 @@ Relax the filter when the user clearly wants short-term / exam coverage (`考试
 6. **Reconcile count** — if far outside target, re-check over/under-cardifying; never pad.
 7. **Set batch provenance** — `source` URI if known; `course` title if known; omit rather than invent.
 8. **Formulate cards** — Form A or B per fact; apply hard constraints; see quality-rules.md when stuck.
-9. **Assign discipline & tags** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`.
-10. **Self-validate** — run the checklist below on every card.
-11. **Output JSON** — one valid JSON object (code block or file).
-12. **Lint, then import** — fix blocking lint errors before POST. On bad import, roll back and re-import.
+9. **Order cards for first reading** — emit `cards[]` foundations-first (concept before application). Server stores array index as `studyOrder`.
+10. **Assign discipline & tags** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`.
+11. **Self-validate** — run the checklist below on every card.
+12. **Output JSON** — one valid JSON object (code block or file).
+13. **Lint, then import** — fix blocking lint errors before POST. On bad import, roll back and re-import.
 
 ## Quality checklist
 
