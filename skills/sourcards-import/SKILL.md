@@ -111,6 +111,8 @@ Relax the filter when the user clearly wants short-term / exam coverage (`考试
 - [ ] `source_quote` supports the card (else drop the claim)?
 - [ ] LaTeX backslashes doubled for JSON?
 - [ ] Wording minimal; definitions include a concrete example when useful?
+- [ ] JA media: `lang:ja` present; pick **one** of `type:vocab` / `type:listening` / `type:reading` (do not stack vocab+listening)?
+- [ ] Listening cards: question-side `<audio src>` present; prefer media-only / non-spoiler front?
 
 ## Lint → import → recover
 

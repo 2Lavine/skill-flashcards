@@ -116,16 +116,32 @@ Supported tokens:
 ![hiragana](https://cdn.example/neko.png)
 ```
 
-Conventions:
+### Genre tags (pick one primary)
+
+| Intent | Tags | Face-down review behavior |
+|--------|------|---------------------------|
+| Reading/vocab with optional audio | `lang:ja` + `type:vocab` | Show question text + media (normal face) |
+| Hear-before-reveal listening | `lang:ja` + `type:listening` | Hide question prose; show Listen prompt until reveal |
+| Reading comprehension | `lang:ja` + `type:reading` | Normal face; media optional |
+
+Do **not** stack `type:vocab` + `type:listening` on the same card. One primary genre keeps Browse filters and Review listen-first chrome consistent.
+
+### Conventions
 
 - Prefer absolute HTTPS media URLs the review hosts can fetch.
 - Tag language with `lang:ja` (also accepts `lang:jp` / `ja` / `japanese` on lint helpers).
-- Listening cards: `type:listening`; vocab: `type:vocab`.
-- Put the primary prompt audio on the **question** when the learner should hear-before-reveal; put answer audio on the **answer** for confirmation.
-- SPA replay hotkey `V` / native "Replay audio" prefer answer audio after reveal (pure `planCardAudioReplay`).
+- **Listening (`type:listening`)**
+  - Put the prompt audio on the **question** (required for listen-first).
+  - Prefer no transcript/prose on the question, or only a short non-spoiler cue.
+  - Put meaning / transcript / script on the **answer** (optional confirmation audio OK).
+  - Media-only question bodies (audio/image markup, no prose) also activate listen-first even without the tag — still tag `type:listening` explicitly.
+- **Vocab (`type:vocab`)**
+  - Keep readable question text; audio/image are helpers, not the only cue.
+  - Normal face-down presentation (text stays visible).
+- Replay: SPA hotkey `V` / native "Replay audio" prefer answer audio after reveal (pure `planCardAudioReplay`); before reveal they use question audio.
 - Images: short alt text; one key image per side when possible.
 
-### Example — JA vocab with audio + image
+### Example — JA vocab (text visible + helper audio)
 
 ```json
 {
@@ -134,11 +150,30 @@ Conventions:
   "source": "https://example.com/ja/n5-vocab",
   "cards": [
     {
-      "question": "What does this mean?\n\n<audio src=\"https://cdn.example/neko.mp3\" controls></audio>\n\n![猫](https://cdn.example/neko.png)",
+      "question": "「ねこ」是什么意思？\n\n<audio src=\"https://cdn.example/neko.mp3\" controls></audio>\n\n![猫](https://cdn.example/neko.png)",
       "answer": "猫（ねこ）— cat",
-      "tags": ["lang:ja", "type:vocab", "type:listening", "alias:猫", "alias:ねこ", "alias:neko"],
+      "tags": ["lang:ja", "type:vocab", "alias:猫", "alias:ねこ", "alias:neko"],
       "category": "名词",
       "source_quote": "猫（ねこ）"
+    }
+  ]
+}
+```
+
+### Example — JA listening (listen-first; hide transcript face-down)
+
+```json
+{
+  "deck": "日语",
+  "course": "N5 · 听解",
+  "source": "https://example.com/ja/n5-listening",
+  "cards": [
+    {
+      "question": "<audio src=\"https://cdn.example/neko.mp3\" controls></audio>",
+      "answer": "猫（ねこ）— cat\n\n<audio src=\"https://cdn.example/neko-slow.mp3\" controls></audio>",
+      "tags": ["lang:ja", "type:listening", "alias:猫", "alias:ねこ", "alias:neko"],
+      "category": "听解",
+      "source_quote": "ねこ"
     }
   ]
 }
