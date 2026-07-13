@@ -104,7 +104,48 @@ Chooser:
 
 Fix by switching to Form A, or rewriting as a true Form B statement whose blank is the memorized term.
 
+
+## Japanese / listening media (markdown-backed)
+
+Keep audio/images **inside** `question` / `answer` markdown. Do **not** invent `audioUrl` / `imageUrl` fields.
+
+Supported tokens:
+
+```html
+<audio src="https://cdn.example/neko.mp3" controls></audio>
+![hiragana](https://cdn.example/neko.png)
+```
+
+Conventions:
+
+- Prefer absolute HTTPS media URLs the review hosts can fetch.
+- Tag language with `lang:ja` (also accepts `lang:jp` / `ja` / `japanese` on lint helpers).
+- Listening cards: `type:listening`; vocab: `type:vocab`.
+- Put the primary prompt audio on the **question** when the learner should hear-before-reveal; put answer audio on the **answer** for confirmation.
+- SPA replay hotkey `V` / native "Replay audio" prefer answer audio after reveal (pure `planCardAudioReplay`).
+- Images: short alt text; one key image per side when possible.
+
+### Example — JA vocab with audio + image
+
+```json
+{
+  "deck": "日语",
+  "course": "N5 · 基础词汇",
+  "source": "https://example.com/ja/n5-vocab",
+  "cards": [
+    {
+      "question": "What does this mean?\n\n<audio src=\"https://cdn.example/neko.mp3\" controls></audio>\n\n![猫](https://cdn.example/neko.png)",
+      "answer": "猫（ねこ）— cat",
+      "tags": ["lang:ja", "type:vocab", "type:listening", "alias:猫", "alias:ねこ", "alias:neko"],
+      "category": "名词",
+      "source_quote": "猫（ねこ）"
+    }
+  ]
+}
+```
+
 ## Math / LaTeX
+
 
 Inline `$...$`, display `$$...$$`. Review app renders with KaTeX.
 

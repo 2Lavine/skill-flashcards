@@ -24,6 +24,7 @@ Never hide the subject of a definition question inside `{{c1::...}}`.
 
 - When a diagram would help, note it in the answer: `（建议配图：细胞结构示意图）`.
 - Spatial relations can be described in words when no image is available.
+- For Japanese / listening study, embed real media in markdown (`<audio …>` / `![alt](url)`); see format.md "Japanese / listening media".
 
 ## 5. Mnemonics
 
