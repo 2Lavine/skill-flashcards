@@ -83,6 +83,7 @@ Relax the filter when the user clearly wants short-term / exam coverage (`考试
 - Card language follows the **source's main language**. Chinese source → Chinese cards by default.
 - Keep canonical technical terms in their common form; bilingual answers are fine when the source mixes languages (`稳定性 (stability)`).
 - Do not translate everything into English "for quality."
+- Japanese listening/vocab media stays markdown-backed (`<audio>` / images + `lang:ja`); see [format.md](references/format.md#japanese--listening-media-markdown-backed).
 
 ## Generation process
 
