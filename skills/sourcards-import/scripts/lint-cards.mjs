@@ -257,7 +257,7 @@ if (catalogBase && parsed && data.deck) {
 report();
 process.exit(errors.length ? 1 : 0);
 
-// Catalog name matching SSOT: packages/skill-flashcards/lib/catalog-name.mjs
+// Catalog name matching SSOT: packages/platform/skill-flashcards/lib/catalog-name.mjs
 // (mirrors monorepo @sourcards/shared catalog-name).
 function norm(s) {
   return normalizeCatalogName(s);

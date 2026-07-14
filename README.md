@@ -12,7 +12,7 @@ This repo is the **source of truth** for external agent skills that:
 - lint card JSON before import
 - import / list / roll back via the SourCards API
 
-It is **not** the in-app Learning Coach runtime (that lives in the SourCards app monorepo under `packages/agent`).
+It is **not** the in-app Learning Coach runtime (that lives in the SourCards app monorepo under `packages/platform/agent`).
 
 ## Layout (plugin)
 
@@ -110,16 +110,16 @@ The app monorepo (`fsrs-flashcards`) vendors this repo as a **git submodule**:
 
 ```text
 fsrs-flashcards/
-  packages/skill-flashcards/   ← this plugin repo (submodule SoT)
-  .agents/skills/sourcards-import → packages/skill-flashcards/skills/sourcards-import
-  .agents/skills/sourcards-import → packages/skill-flashcards/skills/sourcards-import  # compat
-  .agents/skills/sourcards-library-lint → packages/skill-flashcards/skills/sourcards-library-lint
+  packages/platform/skill-flashcards/   ← this plugin repo (submodule SoT)
+  .agents/skills/sourcards-import → packages/platform/skill-flashcards/skills/sourcards-import
+  .agents/skills/sourcards-import → packages/platform/skill-flashcards/skills/sourcards-import  # compat
+  .agents/skills/sourcards-library-lint → packages/platform/skill-flashcards/skills/sourcards-library-lint
 ```
 
 After cloning the monorepo:
 
 ```bash
-git submodule update --init packages/skill-flashcards
+git submodule update --init packages/platform/skill-flashcards
 pnpm install
 pnpm skill:check
 ```
