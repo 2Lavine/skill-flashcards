@@ -47,67 +47,91 @@ node scripts/upload-media.mjs cards.json \
   --provider map --map media-map.json --out cards.json
 ```
 
-## Providers
+## Providers (keep both; switch active)
 
 | Provider | When | Needs |
 |----------|------|--------|
-| `s3` | Cloudflare R2 / any S3-compatible store | endpoint, bucket, keys, **public base URL** |
-| `http` | Your own upload gateway | `SOURCARDS_MEDIA_UPLOAD_URL` → JSON `{ "url": "https://…" }` or base URL + key |
+| **`github`** | Public git repo + jsDelivr (default when R2 off) | `SOURCARDS_MEDIA_REPO_DIR` + `SOURCARDS_MEDIA_GITHUB_BASE_URL` |
+| **`s3`** | Cloudflare R2 / any S3-compatible store | `SOURCARDS_MEDIA_S3_*` + `SOURCARDS_MEDIA_S3_BASE_URL` |
+| `http` | Your own upload gateway | `SOURCARDS_MEDIA_UPLOAD_URL` → JSON `{ "url": "https://…" }` |
 | `map` | Manual / pre-hosted | `--map file.json` |
-| `command` | GitHub+jsDelivr, `wrangler`, `rclone`, custom CLI | `SOURCARDS_MEDIA_UPLOAD_CMD` with `$FILE` `$KEY` `$CONTENT_TYPE` |
+| `command` | Escape hatch (`wrangler`, custom CLI) | `SOURCARDS_MEDIA_UPLOAD_CMD` |
 
-Auto-detect order when `--provider` / `SOURCARDS_MEDIA_PROVIDER` unset: `map` (if `--map`) → `s3` (if endpoint+bucket) → `http` (if upload URL) → `command` (if cmd).
+**Switch without deleting the other config:**
 
-## Quick start: GitHub + jsDelivr (no R2)
+```bash
+# active backend
+export SOURCARDS_MEDIA_PROVIDER=github   # or s3
 
-Use a **public** repo as the blob store; jsDelivr serves it as CDN. This is the default path when Cloudflare R2 is not enabled on the account.
+# one-shot override
+node scripts/upload-media.mjs cards.json --provider s3 --out cards.json
+node scripts/upload-media.mjs cards.json --provider github --out cards.json
+```
 
-1. Public media repo (example already scaffolded): [`2Lavine/sourcards-media`](https://github.com/2Lavine/sourcards-media)
+Auto-detect when `SOURCARDS_MEDIA_PROVIDER` unset:  
+`map` (if `--map`) → **`github`** (if `REPO_DIR`) → `s3` (if endpoint+bucket) → `http` → `command`.
+
+Provider-specific public bases (preferred over shared `SOURCARDS_MEDIA_BASE_URL`):
+
+| Env | Used by |
+|-----|---------|
+| `SOURCARDS_MEDIA_GITHUB_BASE_URL` | `github` |
+| `SOURCARDS_MEDIA_S3_BASE_URL` | `s3` |
+| `SOURCARDS_MEDIA_HTTP_BASE_URL` | `http` |
+| `SOURCARDS_MEDIA_BASE_URL` | fallback for any provider |
+
+## Quick start: GitHub + jsDelivr
+
+1. Public media repo: [`2Lavine/sourcards-media`](https://github.com/2Lavine/sourcards-media)
 2. Clone once:
 
 ```bash
 git clone https://github.com/2Lavine/sourcards-media.git ~/projects/div-skill/sourcards-media
 ```
 
-3. Env (shell profile or monorepo `.env.local` — never commit secrets; GitHub path needs none beyond `gh`/`git` auth):
+3. Env (monorepo `.env.local` — gitignored):
 
 ```bash
-export SOURCARDS_MEDIA_PROVIDER=command
-export SOURCARDS_MEDIA_BASE_URL="https://cdn.jsdelivr.net/gh/2Lavine/sourcards-media@main"
+export SOURCARDS_MEDIA_PROVIDER=github
+export SOURCARDS_MEDIA_GITHUB_BASE_URL="https://cdn.jsdelivr.net/gh/2Lavine/sourcards-media@main"
 export SOURCARDS_MEDIA_REPO_DIR="$HOME/projects/div-skill/sourcards-media"
 export SOURCARDS_MEDIA_PREFIX="cards/"
-# $FILE $KEY are JSON-quoted by upload-media; media-put-github expects raw args:
-export SOURCARDS_MEDIA_UPLOAD_CMD="node \$SKILL_ROOT/scripts/media-put-github.mjs \$SOURCARDS_MEDIA_FILE \$SOURCARDS_MEDIA_KEY"
-# or absolute path to media-put-github.mjs (recommended in .env.local)
 ```
-
-`upload-media` sets `SOURCARDS_MEDIA_FILE` / `SOURCARDS_MEDIA_KEY` / `SOURCARDS_MEDIA_CONTENT_TYPE` in the child env, and also substitutes `$FILE` / `$KEY` / `$CONTENT_TYPE` into the command string as JSON-quoted paths. Prefer the env-var form so the child shell expands them after the env is populated.
 
 4. Run:
 
 ```bash
-SKILL_ROOT=skills/sourcards-import   # or .claude/skills/sourcards-import
+SKILL_ROOT=skills/sourcards-import
 node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
+# equivalent: --provider github
 ```
 
-jsDelivr may take a short time to pick up a brand-new path after push; pin `@main` is fine for personal use. For cache bust after overwrite, change the content hash key (default key layout already includes sha12).
+jsDelivr may lag briefly on brand-new paths after push. Object keys include a content hash so overwrites get new URLs.
 
 ### Env reference
 
 | Env | Role |
 |-----|------|
-| `SOURCARDS_MEDIA_BASE_URL` | Public origin, e.g. `https://media.example.com` (no trailing slash) |
+| `SOURCARDS_MEDIA_PROVIDER` | `github` \| `s3` \| `http` \| `map` \| `command` |
 | `SOURCARDS_MEDIA_PREFIX` | Object key prefix (default `cards/`) |
-| `SOURCARDS_MEDIA_PROVIDER` | `s3` \| `http` \| `map` \| `command` |
+| `SOURCARDS_MEDIA_BASE_URL` | Shared public origin fallback |
+| **GitHub** | |
+| `SOURCARDS_MEDIA_GITHUB_BASE_URL` | e.g. jsDelivr `https://cdn.jsdelivr.net/gh/user/repo@main` |
+| `SOURCARDS_MEDIA_REPO_DIR` | Local clone of the public media repo |
+| `SOURCARDS_MEDIA_GIT_REMOTE` / `_GIT_BRANCH` | default `origin` / `main` |
+| `SOURCARDS_MEDIA_NO_PUSH` | `1` = commit only (tests) |
+| **S3 / R2** | |
+| `SOURCARDS_MEDIA_S3_BASE_URL` | Public CDN origin for objects |
 | `SOURCARDS_MEDIA_S3_ENDPOINT` | e.g. `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
 | `SOURCARDS_MEDIA_S3_BUCKET` | Bucket name |
 | `SOURCARDS_MEDIA_S3_ACCESS_KEY_ID` | R2/S3 access key |
 | `SOURCARDS_MEDIA_S3_SECRET_ACCESS_KEY` | Secret |
 | `SOURCARDS_MEDIA_S3_REGION` | Default `auto` (R2) |
+| **http / command** | |
 | `SOURCARDS_MEDIA_UPLOAD_URL` | http provider POST target |
-| `SOURCARDS_MEDIA_UPLOAD_TOKEN` | Optional Bearer token for http provider |
-| `SOURCARDS_MEDIA_UPLOAD_CMD` | Shell command for command provider |
-| `SOURCARDS_MEDIA_REPO_DIR` | Local clone of public media repo (GitHub put helper) |
+| `SOURCARDS_MEDIA_UPLOAD_TOKEN` | Optional Bearer token |
+| `SOURCARDS_MEDIA_HTTP_BASE_URL` | Public origin if response has no `url` |
+| `SOURCARDS_MEDIA_UPLOAD_CMD` | Shell command for `command` provider |
 | `SOURCARDS_MEDIA_MAX_IMAGE_BYTES` | Default 8 MiB |
 | `SOURCARDS_MEDIA_MAX_AUDIO_BYTES` | Default 20 MiB |
 
@@ -124,10 +148,31 @@ Content-hash prefix → immutable, CDN-cache friendly, natural dedupe.
 
 Allowed extensions: `png jpg jpeg webp gif svg` · `mp3 wav m4a ogg aac webm`.
 
-## Quick start: Cloudflare R2
+## Quick start: Cloudflare R2 (keep GitHub config; switch provider)
 
-1. Create a public-read bucket (or custom domain on the bucket).
+When the CF account has R2 enabled (Dashboard → R2 → enable if you see API code 10042):
+
+1. Create a public-read bucket (or custom domain / r2.dev on the bucket).
 2. Create an R2 API token with Object Read & Write.
+3. Fill `SOURCARDS_MEDIA_S3_*` + `SOURCARDS_MEDIA_S3_BASE_URL` in `.env.local` (leave GitHub vars in place).
+4. Switch:
+
+```bash
+export SOURCARDS_MEDIA_PROVIDER=s3
+# or: --provider s3
+```
+
+### R2 env block (template)
+
+```bash
+export SOURCARDS_MEDIA_PROVIDER=s3
+export SOURCARDS_MEDIA_S3_BASE_URL="https://media.yourdomain.com"
+export SOURCARDS_MEDIA_S3_ENDPOINT="https://<ACCOUNT_ID>.r2.cloudflarestorage.com"
+export SOURCARDS_MEDIA_S3_BUCKET="sourcards-media"
+export SOURCARDS_MEDIA_S3_REGION="auto"
+export SOURCARDS_MEDIA_S3_ACCESS_KEY_ID="…"
+export SOURCARDS_MEDIA_S3_SECRET_ACCESS_KEY="…"
+```
 3. Export:
 
 ```bash
