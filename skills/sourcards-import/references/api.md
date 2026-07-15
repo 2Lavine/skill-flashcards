@@ -7,6 +7,8 @@ POST https://sourcard.sourmonkey.xyz/api/import
 Content-Type: application/json
 ```
 
+Import is **JSON only** — no multipart/binary media. Embed images and audio as absolute `https://` URLs inside each card's `question` / `answer` markdown. Hosting is external (BYO CDN); see [media.md](media.md) and `scripts/upload-media.mjs`.
+
 ## Request Body
 
 `deck` is the **first-level discipline** (broad field, Chinese, e.g. `数学`); each card's

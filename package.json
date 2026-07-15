@@ -1,6 +1,6 @@
 {
   "name": "@sourcards/skill-flashcards",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "SourCards Codex plugin / skill pack: import flashcards (sourcards-import) and lint library organization. Skills: sourcards-import, sourcards-library-lint. Shared org-lint core for app + outer agents.",
   "type": "module",
   "license": "MIT",
@@ -28,15 +28,22 @@
       "types": "./lib/catalog-name.d.ts",
       "import": "./lib/catalog-name.mjs",
       "default": "./lib/catalog-name.mjs"
+    },
+    "./card-media-md": {
+      "types": "./lib/card-media-md.d.ts",
+      "import": "./lib/card-media-md.mjs",
+      "default": "./lib/card-media-md.mjs"
     }
   },
   "bin": {
     "sourcards-lint-cards": "./skills/sourcards-import/scripts/lint-cards.mjs",
+    "sourcards-upload-media": "./skills/sourcards-import/scripts/upload-media.mjs",
     "sourcards-lint-library": "./skills/sourcards-library-lint/scripts/lint-library.mjs"
   },
   "scripts": {
-    "test": "node --test skills/sourcards-import/scripts/lint-cards.test.mjs skills/sourcards-library-lint/scripts/lint-library.test.mjs",
+    "test": "node --test skills/sourcards-import/scripts/lint-cards.test.mjs skills/sourcards-import/scripts/upload-media.test.mjs skills/sourcards-library-lint/scripts/lint-library.test.mjs",
     "lint-cards": "node skills/sourcards-import/scripts/lint-cards.mjs",
+    "upload-media": "node skills/sourcards-import/scripts/upload-media.mjs",
     "lint-library": "node skills/sourcards-library-lint/scripts/lint-library.mjs"
   },
   "keywords": [

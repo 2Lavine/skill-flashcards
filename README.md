@@ -86,11 +86,15 @@ ln -sfn /path/to/skill-flashcards/skills/sourcards-import \
 ```bash
 npm i -g @sourcards/skill-flashcards   # when published
 sourcards-lint-cards cards.json
+sourcards-upload-media cards.json --out cards.json
 ```
 
-## Lint
+## Lint & media upload
 
 ```bash
+# local image/audio → absolute https (BYO CDN; see skills/sourcards-import/references/media.md)
+node skills/sourcards-import/scripts/upload-media.mjs cards.json --out cards.json
+
 # pre-import JSON
 node skills/sourcards-import/scripts/lint-cards.mjs cards.json
 node skills/sourcards-import/scripts/lint-cards.mjs cards.json --catalog https://sourcard.sourmonkey.xyz
@@ -103,6 +107,8 @@ npm test
 ```
 
 Requires `FLASHCARD_API_KEY` for catalog cross-check and import API calls.
+
+Media hosting is **decoupled** from the SourCards app server. Configure `SOURCARDS_MEDIA_*` (R2/S3, http gateway, map file, or shell command) per [media.md](skills/sourcards-import/references/media.md).
 
 ## Develop with the SourCards monorepo
 
