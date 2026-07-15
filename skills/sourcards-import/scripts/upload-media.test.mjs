@@ -7,6 +7,7 @@ import { spawnSync, spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import {
   mkdtempSync,
+  mkdirSync,
   writeFileSync,
   readFileSync,
   rmSync,
@@ -150,6 +151,58 @@ test('map provider rewrites local audio to https', () => {
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('github provider commits into local repo clone (no push) and rewrites', () => {
+  const work = mkdtempSync(join(tmpdir(), 'sc-gh-'));
+  const mediaRepo = join(work, 'media-repo');
+  try {
+    // bare-ish git repo for media
+    mkdirSync(mediaRepo, { recursive: true });
+    const git = (args) => {
+      const r = spawnSync('git', args, { cwd: mediaRepo, encoding: 'utf8' });
+      assert.equal(r.status, 0, r.stderr || r.stdout);
+    };
+    git(['init']);
+    git(['config', 'user.email', 'test@example.com']);
+    git(['config', 'user.name', 'test']);
+    writeFileSync(join(mediaRepo, 'README.md'), 'media\n');
+    git(['add', 'README.md']);
+    git(['commit', '-m', 'init']);
+
+    writeFileSync(join(work, 'dot.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+    const cardsPath = join(work, 'cards.json');
+    const outPath = join(work, 'out.json');
+    writeFileSync(
+      cardsPath,
+      JSON.stringify({
+        deck: '测试',
+        cards: [{ question: '![d](./dot.png)', answer: 'ok' }],
+      }),
+    );
+
+    const { code, err } = run(
+      [cardsPath, '--provider', 'github', '--out', outPath, '--root', work],
+      {
+        env: {
+          SOURCARDS_MEDIA_REPO_DIR: mediaRepo,
+          SOURCARDS_MEDIA_GITHUB_BASE_URL: 'https://cdn.jsdelivr.net/gh/user/repo@main',
+          SOURCARDS_MEDIA_BASE_URL: '',
+          SOURCARDS_MEDIA_NO_PUSH: '1',
+          SOURCARDS_MEDIA_PREFIX: 'cards/',
+          SOURCARDS_MEDIA_PROVIDER: '',
+          SOURCARDS_MEDIA_S3_ENDPOINT: '',
+          SOURCARDS_MEDIA_UPLOAD_URL: '',
+          SOURCARDS_MEDIA_UPLOAD_CMD: '',
+        },
+      },
+    );
+    assert.equal(code, 0, err);
+    const out = JSON.parse(readFileSync(outPath, 'utf8'));
+    assert.match(out.cards[0].question, /https:\/\/cdn\.jsdelivr\.net\/gh\/user\/repo@main\/cards\/[a-f0-9]{12}\/dot\.png/);
+  } finally {
+    rmSync(work, { recursive: true, force: true });
   }
 });
 

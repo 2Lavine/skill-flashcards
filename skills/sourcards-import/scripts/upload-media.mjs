@@ -33,6 +33,7 @@ import {
   needsMediaUpload,
   rewritePayloadMedia,
 } from '../../../lib/card-media-md.mjs';
+import { putGithubMedia } from './media-put-github.mjs';
 
 // ---- args --------------------------------------------------------------------
 
@@ -75,11 +76,18 @@ Rewrite local media paths in card markdown to absolute HTTPS via a BYO CDN.
 
 Options:
   --out <file|->     Write rewritten JSON (default: stdout if dry-run else required)
-  --provider <name>  s3 | http | map | command  (or $SOURCARDS_MEDIA_PROVIDER)
+  --provider <name>  github | s3 | http | map | command  (or $SOURCARDS_MEDIA_PROVIDER)
   --map <file>       JSON map { "local/path": "https://..." } (map provider / override)
   --root <dir|auto>  Resolve relative paths (default: cwd; auto = cards.json dir)
   --dry-run          Plan only; do not upload or write unless --out set
   --json             Machine-readable summary on stdout
+
+Providers (both can stay configured; switch with --provider / SOURCARDS_MEDIA_PROVIDER):
+  github  public git repo + jsDelivr (SOURCARDS_MEDIA_REPO_DIR + _GITHUB_BASE_URL)
+  s3      R2/S3 SigV4 (SOURCARDS_MEDIA_S3_* + _S3_BASE_URL)
+  http    POST multipart to your gateway
+  map     rewrite only from --map file
+  command shell $FILE $KEY via SOURCARDS_MEDIA_UPLOAD_CMD
 
 Env: see references/media.md (SOURCARDS_MEDIA_*).`);
 }
@@ -217,12 +225,47 @@ function detectProvider() {
     return process.env.SOURCARDS_MEDIA_PROVIDER.toLowerCase();
   }
   if (mapFile) return 'map';
+  // Prefer github when a media repo clone is configured (default personal path).
+  if (process.env.SOURCARDS_MEDIA_REPO_DIR) return 'github';
   if (process.env.SOURCARDS_MEDIA_S3_ENDPOINT && process.env.SOURCARDS_MEDIA_S3_BUCKET) {
     return 's3';
   }
   if (process.env.SOURCARDS_MEDIA_UPLOAD_URL) return 'http';
   if (process.env.SOURCARDS_MEDIA_UPLOAD_CMD) return 'command';
   return null;
+}
+
+/**
+ * Provider-specific public base URL, falling back to SOURCARDS_MEDIA_BASE_URL.
+ * Keeps github + s3 configs side-by-side without overwriting each other.
+ */
+function resolveMediaBaseUrl(providerName) {
+  const shared = (process.env.SOURCARDS_MEDIA_BASE_URL || '').replace(/\/+$/, '');
+  if (providerName === 'github') {
+    return (
+      (process.env.SOURCARDS_MEDIA_GITHUB_BASE_URL || '').replace(/\/+$/, '') ||
+      shared
+    );
+  }
+  if (providerName === 's3') {
+    return (
+      (process.env.SOURCARDS_MEDIA_S3_BASE_URL || '').replace(/\/+$/, '') || shared
+    );
+  }
+  if (providerName === 'http') {
+    return (
+      (process.env.SOURCARDS_MEDIA_HTTP_BASE_URL || '').replace(/\/+$/, '') ||
+      shared
+    );
+  }
+  return shared;
+}
+
+/** Apply resolved base URL into env for providers that read SOURCARDS_MEDIA_BASE_URL. */
+function applyProviderBaseUrl(providerName) {
+  const base = resolveMediaBaseUrl(providerName);
+  if (base) process.env.SOURCARDS_MEDIA_BASE_URL = base;
+  return base;
 }
 
 function loadMapFile(path) {
@@ -329,6 +372,15 @@ async function uploadCommand(src, localPath, body, contentType, key) {
   throw new Error('command produced no https URL and SOURCARDS_MEDIA_BASE_URL is unset');
 }
 
+/** First-class GitHub + jsDelivr (same as media-put-github.mjs). */
+async function uploadGithub(src, localPath, body, contentType, key) {
+  return putGithubMedia({
+    file: localPath,
+    key,
+    env: process.env,
+  });
+}
+
 // Minimal AWS SigV4 for S3 PutObject (path-style for R2 compatibility).
 async function uploadS3(src, localPath, body, contentType, key) {
   const endpoint = (process.env.SOURCARDS_MEDIA_S3_ENDPOINT || '').replace(/\/+$/, '');
@@ -423,6 +475,8 @@ async function runProvider(name, src, localPath, body, contentType, key) {
       return uploadHttp(src, localPath, body, contentType, key);
     case 'command':
       return uploadCommand(src, localPath, body, contentType, key);
+    case 'github':
+      return uploadGithub(src, localPath, body, contentType, key);
     case 's3':
       return uploadS3(src, localPath, body, contentType, key);
     default:
@@ -464,6 +518,7 @@ for (const src of allSrcs) {
 }
 
 const providerName = detectProvider();
+if (providerName) applyProviderBaseUrl(providerName);
 
 if (toUpload.length === 0) {
   // Nothing to do — still write through if --out requested
@@ -474,7 +529,7 @@ if (toUpload.length === 0) {
   if (!providerName && !dryRun) {
     console.error(
       `Found ${toUpload.length} local media src(s) but no provider configured.\n` +
-        `Set SOURCARDS_MEDIA_PROVIDER (s3|http|map|command) and related env, or pass --provider map --map file.json.\n` +
+        `Set SOURCARDS_MEDIA_PROVIDER (github|s3|http|map|command) and related env, or pass --provider map --map file.json.\n` +
         `See references/media.md.`,
     );
     for (const s of toUpload) console.error(`  - ${s}`);
