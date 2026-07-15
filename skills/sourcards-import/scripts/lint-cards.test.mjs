@@ -202,6 +202,49 @@ test('audio without lang tag → warning, exit 0', () => {
   assert.match(out, /missing lang:ja/);
 });
 
+test('relative media src → warning about upload-media, exit 0', () => {
+  const { code, out } = lint({
+    deck: '日语',
+    cards: [{
+      question: '<audio src="./neko.mp3" controls></audio>',
+      answer: '猫',
+      tags: ['lang:ja', 'type:listening', 'alias:猫'],
+    }],
+  });
+  assert.equal(code, 0);
+  assert.match(out, /local\/relative/);
+  assert.match(out, /upload-media/);
+});
+
+test('http:// media src → warning prefer https, exit 0', () => {
+  const { code, out } = lint({
+    deck: '日语',
+    cards: [{
+      question: '<audio src="http://cdn.example/a.mp3" controls></audio>',
+      answer: 'a',
+      tags: ['lang:ja', 'type:listening'],
+    }],
+  });
+  assert.equal(code, 0);
+  assert.match(out, /prefer https/);
+});
+
+test('https media src → no local/http media warning', () => {
+  const { code, out } = lint({
+    deck: '日语',
+    source: 'https://ex.com/ja',
+    cards: [{
+      question: '<audio src="https://cdn.example/neko.mp3" controls></audio>',
+      answer: '猫',
+      tags: ['lang:ja', 'type:listening', 'alias:猫'],
+      category: '听解',
+    }],
+  });
+  assert.equal(code, 0);
+  assert.doesNotMatch(out, /local\/relative/);
+  assert.doesNotMatch(out, /prefer https/);
+});
+
 // ---- clean -----------------------------------------------------------------
 
 test('clean payload → exit 0, single clean line', () => {

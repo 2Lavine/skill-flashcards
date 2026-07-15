@@ -109,6 +109,8 @@ Fix by switching to Form A, or rewriting as a true Form B statement whose blank 
 
 Keep audio/images **inside** `question` / `answer` markdown. Do **not** invent `audioUrl` / `imageUrl` fields.
 
+**Hosting:** the app does not store binaries. Draft with local paths if needed (`./clips/neko.mp3`); **before import** every media `src` must be absolute `https://`. Upload/rewrite with `scripts/upload-media.mjs` (BYO CDN). Full setup: [media.md](media.md).
+
 Supported tokens:
 
 ```html
@@ -128,7 +130,7 @@ Do **not** stack `type:vocab` + `type:listening` on the same card. One primary g
 
 ### Conventions
 
-- Prefer absolute HTTPS media URLs the review hosts can fetch.
+- Prefer absolute HTTPS media URLs the review hosts can fetch. Local/relative srcs are draft-only — lint warns; run `upload-media` before import.
 - Tag language with `lang:ja` (also accepts `lang:jp` / `ja` / `japanese` on lint helpers).
 - **Listening (`type:listening`)**
   - Put the prompt audio on the **question** (required for listen-first).

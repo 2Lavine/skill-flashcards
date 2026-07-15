@@ -28,6 +28,10 @@ import {
   findNearCatalogNames,
   normalizeCatalogName,
 } from '../../../lib/catalog-name.mjs';
+import {
+  classifyMediaSrc,
+  extractMediaSrcs,
+} from '../../../lib/card-media-md.mjs';
 
 const errors = [];   // blocking — import would fail or data would be corrupt
 const warnings = []; // quality drift — import still succeeds
@@ -212,6 +216,29 @@ data.cards.forEach((c, idx) => {
   }
   if (cardHasAudio && !/<audio\b[^>]*\bcontrols\b/i.test(q + a)) {
     info(`${tag}: <audio> without controls attribute — review UI still plays via host replay, but controls helps mobile/desktop scrubbing.`);
+  }
+
+  // Absolute HTTPS for import: local / relative / file: paths will not load in review.
+  // Soft warning only — text batches stay exit 0. Fix via upload-media.mjs (see media.md).
+  const mediaSrcs = [...extractMediaSrcs(q), ...extractMediaSrcs(a)];
+  const seenMedia = new Set();
+  for (const src of mediaSrcs) {
+    if (seenMedia.has(src)) continue;
+    seenMedia.add(src);
+    const kind = classifyMediaSrc(src);
+    if (kind === 'local') {
+      warn(
+        `${tag}: media src ${JSON.stringify(src)} is local/relative — run upload-media.mjs (or replace with absolute https://) before import; review hosts cannot fetch disk paths.`,
+      );
+    } else if (kind === 'http') {
+      warn(
+        `${tag}: media src ${JSON.stringify(src)} uses http/protocol-relative — prefer https:// for mixed-content safety.`,
+      );
+    } else if (kind === 'root-relative') {
+      info(
+        `${tag}: media src ${JSON.stringify(src)} is root-relative (SPA demo path). Fine for /demo/* samples; user content should be absolute https:// via BYO CDN (media.md).`,
+      );
+    }
   }
 
   // Cloze form checks. Form B answers *should* be the deleted term(s).

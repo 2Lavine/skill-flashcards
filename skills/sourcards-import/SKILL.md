@@ -14,6 +14,7 @@ Do **not** reload everything every time. Open only what the current step needs:
 | File | Read when |
 |------|-----------|
 | [references/format.md](references/format.md) | Writing/editing card JSON, cloze form, tags, math/LaTeX, or examples |
+| [references/media.md](references/media.md) | Local image/audio paths, BYO CDN upload, `upload-media` env/providers |
 | [references/disciplines.md](references/disciplines.md) | Assigning `deck` / `category` |
 | [references/quality-rules.md](references/quality-rules.md) | Unsure whether a fact deserves a card, or how to split/word it |
 | [references/api.md](references/api.md) | Import, list batches, or roll back a bad import |
@@ -97,8 +98,9 @@ Relax the filter when the user clearly wants short-term / exam coverage (`考试
 8. **Formulate cards** — Form A or B per fact; apply hard constraints; see quality-rules.md when stuck.
 9. **Assign discipline & tags** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`.
 10. **Self-validate** — run the checklist below on every card.
-11. **Output JSON** — one valid JSON object (code block or file).
-12. **Lint, then import** — fix blocking lint errors before POST. On bad import, roll back and re-import.
+11. **Output JSON** — one valid JSON object (code block or file). Local media paths OK while drafting.
+12. **Resolve media** — if any card embeds local/relative image or audio, run `upload-media` (BYO CDN) so every `src` is absolute `https://` before lint. See [media.md](references/media.md).
+13. **Lint, then import** — fix blocking lint errors before POST. On bad import, roll back and re-import.
 
 ## Quality checklist
 
@@ -113,6 +115,7 @@ Relax the filter when the user clearly wants short-term / exam coverage (`考试
 - [ ] Wording minimal; definitions include a concrete example when useful?
 - [ ] JA media: `lang:ja` present; pick **one** of `type:vocab` / `type:listening` / `type:reading` (do not stack vocab+listening)?
 - [ ] Listening cards: question-side `<audio src>` present; prefer media-only / non-spoiler front?
+- [ ] Every media `src` is absolute `https://` (no `./`, `file://`, or bare disk paths) — run `upload-media` if not?
 
 ## Lint → import → recover
 
@@ -127,6 +130,10 @@ SKILL_ROOT="skills/sourcards-import"   # inside this plugin repo
 # SKILL_ROOT="$HOME/.skills-manager/skills/sourcards-import"
 # Or use the package bin after install:
 # sourcards-lint-cards cards.json
+# sourcards-upload-media cards.json --out cards.json
+
+# local/relative media → absolute https (BYO CDN; needs SOURCARDS_MEDIA_* — see media.md)
+node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
 
 # format lint only
 node "$SKILL_ROOT/scripts/lint-cards.mjs" cards.json
