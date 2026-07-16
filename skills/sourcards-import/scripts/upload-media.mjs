@@ -35,6 +35,92 @@ import {
 } from '../../../lib/card-media-md.mjs';
 import { putGithubMedia } from './media-put-github.mjs';
 
+// ---- env bootstrap (skill / agent perception of CDN config) ------------------
+//
+// upload-media does NOT invent a CDN — it only reads SOURCARDS_MEDIA_*.
+// Discovery order:
+//   1. process.env already set (shell export, Claude Code session, CI)
+//   2. auto-load monorepo `.env.local` then `.env` (missing keys only)
+//   3. --provider flag overrides provider choice for one run
+// Secrets stay in gitignored .env.local — never committed into the skill pack.
+
+/**
+ * Minimal dotenv. Does not override keys already present in process.env.
+ * @returns {{ file: string, set: string[] } | null}
+ */
+function loadEnvFile(filePath) {
+  if (!filePath || !existsSync(filePath)) return null;
+  let text;
+  try {
+    text = readFileSync(filePath, 'utf8');
+  } catch {
+    return null;
+  }
+  const set = [];
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    const eq = line.indexOf('=');
+    if (eq <= 0) continue;
+    const key = line.slice(0, eq).trim();
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
+    if (process.env[key] != null && process.env[key] !== '') continue;
+    let val = line.slice(eq + 1).trim();
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
+    }
+    process.env[key] = val;
+    set.push(key);
+  }
+  return { file: filePath, set };
+}
+
+function walkUpFind(startDir, names) {
+  let dir = resolve(startDir);
+  for (let i = 0; i < 12; i++) {
+    for (const name of names) {
+      const p = join(dir, name);
+      if (existsSync(p)) return p;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return null;
+}
+
+/** Load monorepo `.env.local` / `.env` if present. */
+function bootstrapMediaEnv() {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const candidates = [];
+  // Prefer monorepo root .env.local (script is under packages/platform/skill-flashcards/...)
+  const monorepoLocal = resolve(here, '../../../../../../.env.local');
+  const monorepoEnv = resolve(here, '../../../../../../.env');
+  for (const p of [monorepoLocal, monorepoEnv]) {
+    if (existsSync(p) && !candidates.includes(p)) candidates.push(p);
+  }
+  const fromCwd = walkUpFind(process.cwd(), ['.env.local', '.env']);
+  const fromScript = walkUpFind(here, ['.env.local', '.env']);
+  for (const p of [fromCwd, fromScript]) {
+    if (p && !candidates.includes(p)) candidates.push(p);
+  }
+
+  const loaded = [];
+  for (const p of candidates) {
+    const r = loadEnvFile(p);
+    if (r && r.set.length) {
+      const n = r.set.filter((k) => k.startsWith('SOURCARDS_MEDIA_')).length;
+      loaded.push(`${p} (+${n} MEDIA_*)`);
+    }
+  }
+  return loaded;
+}
+
+const envLoadedFrom = bootstrapMediaEnv();
+
 // ---- args --------------------------------------------------------------------
 
 const argv = process.argv.slice(2);
@@ -74,6 +160,11 @@ function printHelp() {
 
 Rewrite local media paths in card markdown to absolute HTTPS via a BYO CDN.
 
+How the skill "sees" your CDN (no magic server config):
+  1. process.env.SOURCARDS_MEDIA_*  (export / Claude session / CI)
+  2. auto-load monorepo .env.local / .env (fills missing keys only)
+  3. --provider flag for one-shot override
+
 Options:
   --out <file|->     Write rewritten JSON (default: stdout if dry-run else required)
   --provider <name>  github | s3 | http | map | command  (or $SOURCARDS_MEDIA_PROVIDER)
@@ -82,9 +173,9 @@ Options:
   --dry-run          Plan only; do not upload or write unless --out set
   --json             Machine-readable summary on stdout
 
-Providers (both can stay configured; switch with --provider / SOURCARDS_MEDIA_PROVIDER):
-  github  public git repo + jsDelivr (SOURCARDS_MEDIA_REPO_DIR + _GITHUB_BASE_URL)
+Providers (keep both configured; switch with PROVIDER / --provider):
   s3      R2/S3 SigV4 (SOURCARDS_MEDIA_S3_* + _S3_BASE_URL)
+  github  public git repo + jsDelivr (REPO_DIR + _GITHUB_BASE_URL)
   http    POST multipart to your gateway
   map     rewrite only from --map file
   command shell $FILE $KEY via SOURCARDS_MEDIA_UPLOAD_CMD
@@ -224,12 +315,16 @@ function detectProvider() {
   if (process.env.SOURCARDS_MEDIA_PROVIDER) {
     return process.env.SOURCARDS_MEDIA_PROVIDER.toLowerCase();
   }
-  if (mapFile) return 'map';
-  // Prefer github when a media repo clone is configured (default personal path).
-  if (process.env.SOURCARDS_MEDIA_REPO_DIR) return 'github';
-  if (process.env.SOURCARDS_MEDIA_S3_ENDPOINT && process.env.SOURCARDS_MEDIA_S3_BUCKET) {
+  // Prefer s3 when fully configured (R2 ready), else github clone, else others.
+  if (
+    process.env.SOURCARDS_MEDIA_S3_ENDPOINT &&
+    process.env.SOURCARDS_MEDIA_S3_BUCKET &&
+    process.env.SOURCARDS_MEDIA_S3_ACCESS_KEY_ID &&
+    process.env.SOURCARDS_MEDIA_S3_SECRET_ACCESS_KEY
+  ) {
     return 's3';
   }
+  if (process.env.SOURCARDS_MEDIA_REPO_DIR) return 'github';
   if (process.env.SOURCARDS_MEDIA_UPLOAD_URL) return 'http';
   if (process.env.SOURCARDS_MEDIA_UPLOAD_CMD) return 'command';
   return null;
@@ -519,6 +614,13 @@ for (const src of allSrcs) {
 
 const providerName = detectProvider();
 if (providerName) applyProviderBaseUrl(providerName);
+
+if (toUpload.length > 0 && !jsonOut && envLoadedFrom.length) {
+  console.error(`env: loaded ${envLoadedFrom.join('; ')}`);
+}
+if (toUpload.length > 0 && !jsonOut && providerName) {
+  console.error(`provider: ${providerName}`);
+}
 
 if (toUpload.length === 0) {
   // Nothing to do — still write through if --out requested

@@ -57,11 +57,21 @@ node scripts/upload-media.mjs cards.json \
 | `map` | Manual / pre-hosted | `--map file.json` |
 | `command` | Escape hatch (`wrangler`, custom CLI) | `SOURCARDS_MEDIA_UPLOAD_CMD` |
 
+### How the skill / agent perceives config
+
+`upload-media.mjs` has **no** link to the SourCards app server. Perception is only:
+
+1. **`process.env`** — if the agent’s shell already has `SOURCARDS_MEDIA_*` (exported, CI secret, Claude Code env).
+2. **Auto `.env.local` / `.env`** — on startup the script walks up from monorepo root (relative to the script) and from `cwd`, loads the first files found, and fills **only keys that are not already set**.
+3. **`--provider`** — one-shot override of which backend to use.
+
+So when Claude runs `node …/upload-media.mjs cards.json --out cards.json` inside this monorepo, it picks up `SOURCARDS_MEDIA_PROVIDER=s3` and R2 credentials from gitignored `.env.local` without a manual `source`.
+
 **Switch without deleting the other config:**
 
 ```bash
-# active backend
-export SOURCARDS_MEDIA_PROVIDER=github   # or s3
+# active backend (in .env.local or export)
+export SOURCARDS_MEDIA_PROVIDER=s3   # or github
 
 # one-shot override
 node scripts/upload-media.mjs cards.json --provider s3 --out cards.json
@@ -69,7 +79,8 @@ node scripts/upload-media.mjs cards.json --provider github --out cards.json
 ```
 
 Auto-detect when `SOURCARDS_MEDIA_PROVIDER` unset:  
-`map` (if `--map`) → **`github`** (if `REPO_DIR`) → `s3` (if endpoint+bucket) → `http` → `command`.
+**`s3`** (if endpoint+bucket+keys all set) → **`github`** (if `REPO_DIR`) → `http` → `command`.  
+(`--map` still forces map when you pass that flag.)
 
 Provider-specific public bases (preferred over shared `SOURCARDS_MEDIA_BASE_URL`):
 
