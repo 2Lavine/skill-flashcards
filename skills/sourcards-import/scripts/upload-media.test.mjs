@@ -256,6 +256,9 @@ test('local media without provider → exit 1', () => {
         SOURCARDS_MEDIA_REPO_DIR: '',
         SOURCARDS_MEDIA_UPLOAD_URL: '',
         SOURCARDS_MEDIA_UPLOAD_CMD: '',
+        SOURCARDS_MEDIA_UPLOAD_TOKEN: '',
+        // Official path defaults when this is set — blank for "no provider" case.
+        FLASHCARD_API_KEY: '',
       },
     });
     assert.equal(code, 1);
