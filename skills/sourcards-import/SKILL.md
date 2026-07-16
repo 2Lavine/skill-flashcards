@@ -14,7 +14,7 @@ Do **not** reload everything every time. Open only what the current step needs:
 | File | Read when |
 |------|-----------|
 | [references/format.md](references/format.md) | Writing/editing card JSON, cloze form, tags, math/LaTeX, or examples |
-| [references/media.md](references/media.md) | Local image/audio paths, BYO CDN upload, `upload-media` env/providers |
+| [references/media.md](references/media.md) | Local image/audio → official `/api/media` (same `FLASHCARD_API_KEY` as import) or GitHub BYO |
 | [references/disciplines.md](references/disciplines.md) | Assigning `deck` / `category` |
 | [references/quality-rules.md](references/quality-rules.md) | Unsure whether a fact deserves a card, or how to split/word it |
 | [references/api.md](references/api.md) | Import, list batches, or roll back a bad import |
@@ -132,11 +132,11 @@ SKILL_ROOT="skills/sourcards-import"   # inside this plugin repo
 # sourcards-lint-cards cards.json
 # sourcards-upload-media cards.json --out cards.json
 
-# local/relative media → absolute https
-# Paths:
-#   - Official (Pro): provider=http → POST /api/media (FLASHCARD_API_KEY)
-#   - Free / BYO:    --provider github (SOURCARDS_MEDIA_REPO_DIR + jsDelivr)
-# Config: process.env or monorepo .env.local auto-load. See references/media.md
+# local/relative media → absolute https via official upload (default)
+# Uses the SAME key as import: $FLASHCARD_API_KEY
+#   (env var first; else Settings → API Keys → Create key — see api.md)
+# POST https://sourcard.sourmonkey.xyz/api/media  (Pro / pro_trial)
+# Free / BYO only: --provider github  (see media.md)
 node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
 
 # format lint only

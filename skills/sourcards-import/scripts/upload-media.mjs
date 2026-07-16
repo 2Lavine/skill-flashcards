@@ -317,18 +317,14 @@ function detectProvider() {
   if (process.env.SOURCARDS_MEDIA_PROVIDER) {
     return process.env.SOURCARDS_MEDIA_PROVIDER.toLowerCase();
   }
-  // Official Pro API (http) when upload URL + API key present.
-  const uploadUrl =
-    process.env.SOURCARDS_MEDIA_UPLOAD_URL ||
-    process.env.SOURCARDS_MEDIA_OFFICIAL_URL ||
-    '';
+  // Default: same key as import (FLASHCARD_API_KEY) → official POST /api/media.
+  // URL defaults to production if SOURCARDS_MEDIA_UPLOAD_URL unset.
   const hasKey =
-    process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN ||
-    process.env.FLASHCARD_API_KEY;
-  if (uploadUrl && hasKey) return 'http';
-  // BYO GitHub (any plan)
+    process.env.FLASHCARD_API_KEY ||
+    process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN;
+  if (hasKey) return 'http';
+  // BYO fallbacks only when no project API key
   if (process.env.SOURCARDS_MEDIA_REPO_DIR) return 'github';
-  // BYO personal S3/R2
   if (
     process.env.SOURCARDS_MEDIA_S3_ENDPOINT &&
     process.env.SOURCARDS_MEDIA_S3_BUCKET &&
