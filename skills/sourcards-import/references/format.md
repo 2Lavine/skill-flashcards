@@ -105,33 +105,37 @@ Chooser:
 Fix by switching to Form A, or rewriting as a true Form B statement whose blank is the memorized term.
 
 
-## Japanese / listening media (markdown-backed)
+## Image / audio media (markdown-backed)
 
 Keep audio/images **inside** `question` / `answer` markdown. Do **not** invent `audioUrl` / `imageUrl` fields.
 
-**Hosting:** the app does not store binaries. Draft with local paths if needed (`./clips/neko.mp3`); **before import** every media `src` must be absolute `https://`. Upload/rewrite with `scripts/upload-media.mjs` (BYO CDN). Full setup: [media.md](media.md).
+**Hosting:** draft with local paths if needed (`./clips/term.mp3`); **before import** every media `src` must be absolute `https://`. Run `scripts/upload-media.mjs` — default is official `POST /api/media` with the same `FLASHCARD_API_KEY` as import (Pro). Free / BYO: `--provider github`. Full setup: [media.md](media.md).
 
 Supported tokens:
 
 ```html
-<audio src="https://cdn.example/neko.mp3" controls></audio>
-![hiragana](https://cdn.example/neko.png)
+<audio src="https://cdn.example/mitochondria.mp3" controls></audio>
+![cell diagram](https://cdn.example/cell.png)
 ```
 
-### Genre tags (pick one primary)
+### Genre tags (pick one primary when learning a language)
 
 | Intent | Tags | Face-down review behavior |
 |--------|------|---------------------------|
-| Reading/vocab with optional audio | `lang:ja` + `type:vocab` | Show question text + media (normal face) |
-| Hear-before-reveal listening | `lang:ja` + `type:listening` | Hide question prose; show Listen prompt until reveal |
-| Reading comprehension | `lang:ja` + `type:reading` | Normal face; media optional |
+| Reading/vocab with optional audio | `lang:<code>` + `type:vocab` | Show question text + media (normal face) |
+| Hear-before-reveal listening | `lang:<code>` + `type:listening` | Hide question prose; show Listen prompt until reveal |
+| Reading comprehension | `lang:<code>` + `type:reading` | Normal face; media optional |
+
+`lang:<code>` examples: `lang:en`, `lang:ja`, `lang:zh`. Lint helpers also accept short forms for Japanese (`lang:jp` / `ja` / `japanese`).
 
 Do **not** stack `type:vocab` + `type:listening` on the same card. One primary genre keeps Browse filters and Review listen-first chrome consistent.
+
+For non-language subjects (biology diagrams, UI screenshots, lecture clips), you can omit genre tags and still embed `<audio>` / `![alt](url)` — only add `type:listening` when you want listen-first chrome.
 
 ### Conventions
 
 - Prefer absolute HTTPS media URLs the review hosts can fetch. Local/relative srcs are draft-only — lint warns; run `upload-media` before import.
-- Tag language with `lang:ja` (also accepts `lang:jp` / `ja` / `japanese` on lint helpers).
+- Tag spoken/written language with `lang:<code>` when the card is language study.
 - **Listening (`type:listening`)**
   - Put the prompt audio on the **question** (required for listen-first).
   - Prefer no transcript/prose on the question, or only a short non-spoiler cue.
@@ -143,39 +147,39 @@ Do **not** stack `type:vocab` + `type:listening` on the same card. One primary g
 - Replay: SPA hotkey `V` / native "Replay audio" prefer answer audio after reveal (pure `planCardAudioReplay`); before reveal they use question audio.
 - Images: short alt text; one key image per side when possible.
 
-### Example — JA vocab (text visible + helper audio)
+### Example — vocab (text visible + helper audio / image)
 
 ```json
 {
-  "deck": "日语",
-  "course": "N5 · 基础词汇",
-  "source": "https://example.com/ja/n5-vocab",
+  "deck": "生物学",
+  "course": "细胞结构 · 入门",
+  "source": "https://example.edu/bio/cell",
   "cards": [
     {
-      "question": "「ねこ」是什么意思？\n\n<audio src=\"https://cdn.example/neko.mp3\" controls></audio>\n\n![猫](https://cdn.example/neko.png)",
-      "answer": "猫（ねこ）— cat",
-      "tags": ["lang:ja", "type:vocab", "alias:猫", "alias:ねこ", "alias:neko"],
-      "category": "名词",
-      "source_quote": "猫（ねこ）"
+      "question": "线粒体为什么常被称为细胞的“能量工厂”？\n\n<audio src=\"https://cdn.example/mito-explain.mp3\" controls></audio>\n\n![线粒体示意](https://cdn.example/mito.png)",
+      "answer": "因为它通过有氧呼吸产生 ATP，为细胞生命活动供能。",
+      "tags": ["type:entity", "type:vocab", "lang:zh", "alias:线粒体", "alias:mitochondria"],
+      "category": "细胞生物学",
+      "source_quote": "线粒体是细胞的能量工厂，通过有氧呼吸产生ATP。"
     }
   ]
 }
 ```
 
-### Example — JA listening (listen-first; hide transcript face-down)
+### Example — listening (listen-first; hide transcript face-down)
 
 ```json
 {
-  "deck": "日语",
-  "course": "N5 · 听解",
-  "source": "https://example.com/ja/n5-listening",
+  "deck": "英语",
+  "course": "Listening · short prompts",
+  "source": "https://example.com/en/listening-01",
   "cards": [
     {
-      "question": "<audio src=\"https://cdn.example/neko.mp3\" controls></audio>",
-      "answer": "猫（ねこ）— cat\n\n<audio src=\"https://cdn.example/neko-slow.mp3\" controls></audio>",
-      "tags": ["lang:ja", "type:listening", "alias:猫", "alias:ねこ", "alias:neko"],
+      "question": "<audio src=\"https://cdn.example/prompt-01.mp3\" controls></audio>",
+      "answer": "Please open your books to page twenty.\n\n<audio src=\"https://cdn.example/prompt-01-slow.mp3\" controls></audio>",
+      "tags": ["lang:en", "type:listening", "alias:open your books"],
       "category": "听解",
-      "source_quote": "ねこ"
+      "source_quote": "Please open your books to page twenty."
     }
   ]
 }
