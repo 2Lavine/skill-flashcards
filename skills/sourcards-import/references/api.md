@@ -9,19 +9,21 @@ Content-Type: application/json
 
 Import is **JSON only** — no multipart/binary media. Embed images and audio as absolute `https://` URLs inside each card's `question` / `answer` markdown.
 
-### Official media upload (Pro)
+### Official media upload (Pro) — skill default
+
+Same auth as import: **`x-api-key: $FLASHCARD_API_KEY`** (see Authentication below).
 
 ```
 POST https://sourcard.sourmonkey.xyz/api/media
 Content-Type: multipart/form-data
-x-api-key: <FLASHCARD_API_KEY>
+x-api-key: $FLASHCARD_API_KEY
 # field: file
 ```
 
 - **Pro / pro_trial only** (`403 pro_required` for free).
 - Response: `{ "ok": true, "url": "https://…", "key": "users/…", "bytes": N }`.
-- Skill: `upload-media --provider http` (or auto when `SOURCARDS_MEDIA_UPLOAD_URL` + API key set).
-- Free users: GitHub BYO — see [media.md](media.md).
+- Skill default: when `FLASHCARD_API_KEY` is set, `upload-media` uses this endpoint automatically (no extra media token).
+- Free users: GitHub BYO — `upload-media --provider github` — see [media.md](media.md).
 
 ## Request Body
 

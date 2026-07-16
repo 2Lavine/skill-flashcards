@@ -20,19 +20,23 @@ Relative, `file://`, and bare disk paths will not load in the web/desktop/mobile
 
 Root-relative paths like `/demo/ja/neko.mp3` are **SPA demo assets only** — not a model for user content.
 
-## Agent workflow
+## Agent workflow (default = official upload)
+
+**Auth is the same as import:** `FLASHCARD_API_KEY` in the environment.  
+Check `echo "$FLASHCARD_API_KEY"` first; if missing, user creates one in the app: **Settings → API Keys → Create key** (see [api.md](api.md)).
 
 ```text
 1. Formulate cards.json  (may embed ./local media paths)
 2. node scripts/upload-media.mjs cards.json --out cards.json
+   → default: POST /api/media with x-api-key: $FLASHCARD_API_KEY  (Pro)
 3. node scripts/lint-cards.mjs cards.json [--catalog …]
-4. POST /api/import   (see api.md)
+4. POST /api/import with the same x-api-key  (see api.md)
 ```
 
 ```bash
 SKILL_ROOT="skills/sourcards-import"   # or package install path
 
-# After configuring env (below):
+# Requires FLASHCARD_API_KEY (same as import) — Pro / pro_trial for /api/media
 node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
 # or: sourcards-upload-media cards.json --out cards.json
 ```
@@ -49,47 +53,44 @@ node scripts/upload-media.mjs cards.json \
 
 ## Two product paths
 
-| Path | Who | Skill provider |
-|------|-----|----------------|
-| **Official** `POST /api/media` | **Pro / pro_trial** only | `http` (default when API key + URL set) |
-| **GitHub BYO** public repo + jsDelivr | Any plan (incl. free) | `github` |
+| Path | Who | Skill |
+|------|-----|--------|
+| **Official** `POST /api/media` | **Pro / pro_trial** | **Default** when `FLASHCARD_API_KEY` is set |
+| **GitHub BYO** public repo + jsDelivr | Any plan (incl. free) | `--provider github` |
 
-Official store is SourCards R2; free users use GitHub (or personal S3). Schema unchanged.
+Official store is SourCards R2. Schema unchanged — only URLs in markdown.
 
-## Providers (switch active)
+## Providers
 
 | Provider | When | Needs |
 |----------|------|--------|
-| **`http`** | **Official Pro API** (or custom gateway) | `FLASHCARD_API_KEY` + `SOURCARDS_MEDIA_UPLOAD_URL` (default `https://sourcard.sourmonkey.xyz/api/media`) |
-| **`github`** | Public git repo + jsDelivr (free-friendly) | `SOURCARDS_MEDIA_REPO_DIR` + `SOURCARDS_MEDIA_GITHUB_BASE_URL` |
-| **`s3`** | Personal R2/S3 (power user) | `SOURCARDS_MEDIA_S3_*` + `SOURCARDS_MEDIA_S3_BASE_URL` |
-| `map` | Manual / pre-hosted | `--map file.json` |
-| `command` | Escape hatch | `SOURCARDS_MEDIA_UPLOAD_CMD` |
+| **`http`** (default) | Official Pro API | **`FLASHCARD_API_KEY`** (same as import). Optional `SOURCARDS_MEDIA_UPLOAD_URL` (default `https://sourcard.sourmonkey.xyz/api/media`) |
+| **`github`** | Free / BYO | `SOURCARDS_MEDIA_REPO_DIR` + `SOURCARDS_MEDIA_GITHUB_BASE_URL` |
+| **`s3`** | Personal R2/S3 (power user) | `SOURCARDS_MEDIA_S3_*` |
+| `map` / `command` | Escape hatches | see below |
 
-### How the skill / agent perceives config
+### How the skill finds the API key
 
-`upload-media.mjs` has **no** link to the SourCards app server. Perception is only:
+Same rules as import / catalog lint:
 
-1. **`process.env`** — if the agent’s shell already has `SOURCARDS_MEDIA_*` (exported, CI secret, Claude Code env).
-2. **Auto `.env.local` / `.env`** — on startup the script walks up from monorepo root (relative to the script) and from `cwd`, loads the first files found, and fills **only keys that are not already set**.
-3. **`--provider`** — one-shot override of which backend to use.
+1. **`process.env.FLASHCARD_API_KEY`** (shell export, Claude session, monorepo `.env` / `.env.local` auto-load)
+2. If missing → ask user: **Settings → API Keys → Create key**, store as `FLASHCARD_API_KEY`
+3. Optional override token: `SOURCARDS_MEDIA_UPLOAD_TOKEN` (rarely needed)
 
-So when Claude runs `node …/upload-media.mjs cards.json --out cards.json` inside this monorepo, it picks up `SOURCARDS_MEDIA_PROVIDER=s3` and R2 credentials from gitignored `.env.local` without a manual `source`.
+`upload-media` also auto-loads monorepo `.env.local` / `.env` for missing keys (never overrides already-set env).
 
-**Switch without deleting the other config:**
+**Default auto-detect** when `SOURCARDS_MEDIA_PROVIDER` unset:
+
+1. `FLASHCARD_API_KEY` (or upload token) → **`http`** (official)
+2. else `SOURCARDS_MEDIA_REPO_DIR` → `github`
+3. else full personal `S3_*` → `s3`
+4. else `command` if set
 
 ```bash
-# active backend (in .env.local or export)
-export SOURCARDS_MEDIA_PROVIDER=s3   # or github
-
-# one-shot override
-node scripts/upload-media.mjs cards.json --provider s3 --out cards.json
+# one-shot overrides
 node scripts/upload-media.mjs cards.json --provider github --out cards.json
+node scripts/upload-media.mjs cards.json --provider s3 --out cards.json
 ```
-
-Auto-detect when `SOURCARDS_MEDIA_PROVIDER` unset:  
-**`s3`** (if endpoint+bucket+keys all set) → **`github`** (if `REPO_DIR`) → `http` → `command`.  
-(`--map` still forces map when you pass that flag.)
 
 Provider-specific public bases (preferred over shared `SOURCARDS_MEDIA_BASE_URL`):
 
@@ -97,7 +98,7 @@ Provider-specific public bases (preferred over shared `SOURCARDS_MEDIA_BASE_URL`
 |-----|---------|
 | `SOURCARDS_MEDIA_GITHUB_BASE_URL` | `github` |
 | `SOURCARDS_MEDIA_S3_BASE_URL` | `s3` |
-| `SOURCARDS_MEDIA_HTTP_BASE_URL` | `http` |
+| `SOURCARDS_MEDIA_HTTP_BASE_URL` | `http` (rarely needed; API returns full url) |
 | `SOURCARDS_MEDIA_BASE_URL` | fallback for any provider |
 
 ## Quick start: GitHub + jsDelivr
@@ -155,7 +156,7 @@ jsDelivr may lag briefly on brand-new paths after push. Object keys include a co
 | `SOURCARDS_MEDIA_MAX_IMAGE_BYTES` | Default 8 MiB |
 | `SOURCARDS_MEDIA_MAX_AUDIO_BYTES` | Default 20 MiB |
 
-Do **not** reuse `FLASHCARD_API_KEY` as media credentials — that key is only for the SourCards import/catalog API.
+**Official media reuses `FLASHCARD_API_KEY`** (same as import). Personal S3/GitHub BYO uses their own env vars, not that key.
 
 ### Object keys
 
