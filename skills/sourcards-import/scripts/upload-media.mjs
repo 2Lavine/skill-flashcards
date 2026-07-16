@@ -317,7 +317,18 @@ function detectProvider() {
   if (process.env.SOURCARDS_MEDIA_PROVIDER) {
     return process.env.SOURCARDS_MEDIA_PROVIDER.toLowerCase();
   }
-  // Prefer s3 when fully configured (R2 ready), else github clone, else others.
+  // Official Pro API (http) when upload URL + API key present.
+  const uploadUrl =
+    process.env.SOURCARDS_MEDIA_UPLOAD_URL ||
+    process.env.SOURCARDS_MEDIA_OFFICIAL_URL ||
+    '';
+  const hasKey =
+    process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN ||
+    process.env.FLASHCARD_API_KEY;
+  if (uploadUrl && hasKey) return 'http';
+  // BYO GitHub (any plan)
+  if (process.env.SOURCARDS_MEDIA_REPO_DIR) return 'github';
+  // BYO personal S3/R2
   if (
     process.env.SOURCARDS_MEDIA_S3_ENDPOINT &&
     process.env.SOURCARDS_MEDIA_S3_BUCKET &&
@@ -326,8 +337,6 @@ function detectProvider() {
   ) {
     return 's3';
   }
-  if (process.env.SOURCARDS_MEDIA_REPO_DIR) return 'github';
-  if (process.env.SOURCARDS_MEDIA_UPLOAD_URL) return 'http';
   if (process.env.SOURCARDS_MEDIA_UPLOAD_CMD) return 'command';
   return null;
 }
@@ -389,9 +398,15 @@ async function uploadMap(src, _localPath, _body, _contentType, _key) {
 }
 
 async function uploadHttp(src, localPath, body, contentType, key) {
-  const url = process.env.SOURCARDS_MEDIA_UPLOAD_URL;
-  if (!url) throw new Error('SOURCARDS_MEDIA_UPLOAD_URL required for http provider');
-  const token = process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN || '';
+  const url =
+    process.env.SOURCARDS_MEDIA_UPLOAD_URL ||
+    process.env.SOURCARDS_MEDIA_OFFICIAL_URL ||
+    'https://sourcard.sourmonkey.xyz/api/media';
+  // Official API uses better-auth API keys (x-api-key). Bearer still supported for custom gateways.
+  const token =
+    process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN ||
+    process.env.FLASHCARD_API_KEY ||
+    '';
   const baseUrl = process.env.SOURCARDS_MEDIA_BASE_URL || '';
 
   // multipart form: file + key + contentType
@@ -412,18 +427,31 @@ async function uploadHttp(src, localPath, body, contentType, key) {
     'content-type': `multipart/form-data; boundary=${boundary}`,
     'content-length': String(formBody.length),
   };
-  if (token) headers.authorization = `Bearer ${token}`;
+  if (token) {
+    headers['x-api-key'] = token;
+    headers.authorization = `Bearer ${token}`;
+  }
 
   const res = await fetch(url, { method: 'POST', headers, body: formBody });
   const text = await res.text();
-  if (!res.ok) {
-    throw new Error(`http upload ${res.status}: ${text.slice(0, 200)}`);
-  }
   let data = null;
   try {
     data = text ? JSON.parse(text) : null;
   } catch {
     data = null;
+  }
+  if (!res.ok) {
+    if (res.status === 403 && data?.error === 'pro_required') {
+      throw new Error(
+        `官方媒体上传需要 Pro（403 pro_required）。Free 请改用 GitHub：--provider github（需 SOURCARDS_MEDIA_REPO_DIR）。详情: ${data?.message || text.slice(0, 120)}`,
+      );
+    }
+    if (res.status === 401) {
+      throw new Error(
+        `媒体上传未授权 (401)。设置 FLASHCARD_API_KEY 或 SOURCARDS_MEDIA_UPLOAD_TOKEN。`,
+      );
+    }
+    throw new Error(`http upload ${res.status}: ${text.slice(0, 200)}`);
   }
   if (data && typeof data.url === 'string' && /^https?:\/\//i.test(data.url)) {
     return data.url;
