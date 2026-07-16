@@ -64,7 +64,8 @@ function loadEnvFile(filePath) {
     if (eq <= 0) continue;
     const key = line.slice(0, eq).trim();
     if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
-    if (process.env[key] != null && process.env[key] !== '') continue;
+    // Respect keys already present (including empty string = explicit blank in tests).
+    if (Object.prototype.hasOwnProperty.call(process.env, key)) continue;
     let val = line.slice(eq + 1).trim();
     if (
       (val.startsWith('"') && val.endsWith('"')) ||
@@ -94,6 +95,7 @@ function walkUpFind(startDir, names) {
 
 /** Load monorepo `.env.local` / `.env` if present. */
 function bootstrapMediaEnv() {
+  if (process.env.SOURCARDS_MEDIA_SKIP_ENV_FILE === '1') return [];
   const here = dirname(fileURLToPath(import.meta.url));
   const candidates = [];
   // Prefer monorepo root .env.local (script is under packages/platform/skill-flashcards/...)

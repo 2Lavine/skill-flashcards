@@ -32,14 +32,26 @@ function run(args, { input, env = {} } = {}) {
   const r = spawnSync('node', [UPLOAD, ...args], {
     input: input != null ? (typeof input === 'string' ? input : JSON.stringify(input)) : undefined,
     encoding: 'utf8',
-    env: { ...process.env, ...env },
+    // Default: skip monorepo .env.local so unit tests don't hit real R2/GitHub.
+    // Opt in to real env with env: { SOURCARDS_MEDIA_SKIP_ENV_FILE: '' } or omit after delete.
+    env: {
+      ...process.env,
+      SOURCARDS_MEDIA_SKIP_ENV_FILE: '1',
+      ...env,
+    },
   });
   return { code: r.status, out: r.stdout, err: r.stderr, combined: r.stdout + r.stderr };
 }
 
 function runAsync(args, { input, env = {} } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn('node', [UPLOAD, ...args], { env: { ...process.env, ...env } });
+    const child = spawn('node', [UPLOAD, ...args], {
+      env: {
+        ...process.env,
+        SOURCARDS_MEDIA_SKIP_ENV_FILE: '1',
+        ...env,
+      },
+    });
     let out = '';
     let err = '';
     child.stdout.on('data', (d) => { out += d; });
@@ -235,8 +247,13 @@ test('local media without provider → exit 1', () => {
     const { code, combined } = run(['--root', dir], {
       input: payload,
       env: {
+        SOURCARDS_MEDIA_SKIP_ENV_FILE: '1',
         SOURCARDS_MEDIA_PROVIDER: '',
         SOURCARDS_MEDIA_S3_ENDPOINT: '',
+        SOURCARDS_MEDIA_S3_BUCKET: '',
+        SOURCARDS_MEDIA_S3_ACCESS_KEY_ID: '',
+        SOURCARDS_MEDIA_S3_SECRET_ACCESS_KEY: '',
+        SOURCARDS_MEDIA_REPO_DIR: '',
         SOURCARDS_MEDIA_UPLOAD_URL: '',
         SOURCARDS_MEDIA_UPLOAD_CMD: '',
       },
