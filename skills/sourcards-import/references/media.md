@@ -1,6 +1,6 @@
-# Media hosting (BYO CDN)
+# Media hosting
 
-SourCards **does not host** card images or audio. Review loads media by URL from whatever origin you put in the markdown. Import is JSON-only — keep media inside `question` / `answer` as:
+Review loads media by URL from whatever origin you put in the markdown. Import is JSON-only — keep media inside `question` / `answer` as:
 
 ```html
 <audio src="https://…" controls></audio>
@@ -47,15 +47,24 @@ node scripts/upload-media.mjs cards.json \
   --provider map --map media-map.json --out cards.json
 ```
 
-## Providers (keep both; switch active)
+## Two product paths
+
+| Path | Who | Skill provider |
+|------|-----|----------------|
+| **Official** `POST /api/media` | **Pro / pro_trial** only | `http` (default when API key + URL set) |
+| **GitHub BYO** public repo + jsDelivr | Any plan (incl. free) | `github` |
+
+Official store is SourCards R2; free users use GitHub (or personal S3). Schema unchanged.
+
+## Providers (switch active)
 
 | Provider | When | Needs |
 |----------|------|--------|
-| **`github`** | Public git repo + jsDelivr (default when R2 off) | `SOURCARDS_MEDIA_REPO_DIR` + `SOURCARDS_MEDIA_GITHUB_BASE_URL` |
-| **`s3`** | Cloudflare R2 / any S3-compatible store | `SOURCARDS_MEDIA_S3_*` + `SOURCARDS_MEDIA_S3_BASE_URL` |
-| `http` | Your own upload gateway | `SOURCARDS_MEDIA_UPLOAD_URL` → JSON `{ "url": "https://…" }` |
+| **`http`** | **Official Pro API** (or custom gateway) | `FLASHCARD_API_KEY` + `SOURCARDS_MEDIA_UPLOAD_URL` (default `https://sourcard.sourmonkey.xyz/api/media`) |
+| **`github`** | Public git repo + jsDelivr (free-friendly) | `SOURCARDS_MEDIA_REPO_DIR` + `SOURCARDS_MEDIA_GITHUB_BASE_URL` |
+| **`s3`** | Personal R2/S3 (power user) | `SOURCARDS_MEDIA_S3_*` + `SOURCARDS_MEDIA_S3_BASE_URL` |
 | `map` | Manual / pre-hosted | `--map file.json` |
-| `command` | Escape hatch (`wrangler`, custom CLI) | `SOURCARDS_MEDIA_UPLOAD_CMD` |
+| `command` | Escape hatch | `SOURCARDS_MEDIA_UPLOAD_CMD` |
 
 ### How the skill / agent perceives config
 

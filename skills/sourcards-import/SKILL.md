@@ -132,11 +132,11 @@ SKILL_ROOT="skills/sourcards-import"   # inside this plugin repo
 # sourcards-lint-cards cards.json
 # sourcards-upload-media cards.json --out cards.json
 
-# local/relative media → absolute https (BYO CDN)
-# How config is found: process.env.SOURCARDS_MEDIA_* OR monorepo .env.local auto-load
-# (script walks up from cwd / skill path). Default provider is whatever
-# SOURCARDS_MEDIA_PROVIDER says (this machine: s3/R2). Override: --provider github|s3
-# Details: references/media.md
+# local/relative media → absolute https
+# Paths:
+#   - Official (Pro): provider=http → POST /api/media (FLASHCARD_API_KEY)
+#   - Free / BYO:    --provider github (SOURCARDS_MEDIA_REPO_DIR + jsDelivr)
+# Config: process.env or monorepo .env.local auto-load. See references/media.md
 node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
 
 # format lint only
