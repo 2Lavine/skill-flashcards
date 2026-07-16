@@ -84,7 +84,7 @@ Relax the filter when the user clearly wants short-term / exam coverage (`考试
 - Card language follows the **source's main language**. Chinese source → Chinese cards by default.
 - Keep canonical technical terms in their common form; bilingual answers are fine when the source mixes languages (`稳定性 (stability)`).
 - Do not translate everything into English "for quality."
-- Japanese listening/vocab media stays markdown-backed (`<audio>` / images + `lang:ja`); see [format.md](references/format.md#japanese--listening-media-markdown-backed).
+- Image/audio media stays markdown-backed (`<audio>` / `![alt](url)`); language study may add `lang:<code>` + one of `type:vocab` / `type:listening` / `type:reading`. See [format.md](references/format.md#image--audio-media-markdown-backed).
 
 ## Generation process
 
@@ -99,7 +99,7 @@ Relax the filter when the user clearly wants short-term / exam coverage (`考试
 9. **Assign discipline & tags** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`.
 10. **Self-validate** — run the checklist below on every card.
 11. **Output JSON** — one valid JSON object (code block or file). Local media paths OK while drafting.
-12. **Resolve media** — if any card embeds local/relative image or audio, run `upload-media` (BYO CDN) so every `src` is absolute `https://` before lint. See [media.md](references/media.md).
+12. **Resolve media** — if any card embeds local/relative image or audio, run `upload-media` (default: official `/api/media` with `$FLASHCARD_API_KEY`) so every `src` is absolute `https://` before lint. See [media.md](references/media.md).
 13. **Lint, then import** — fix blocking lint errors before POST. On bad import, roll back and re-import.
 
 ## Quality checklist
@@ -113,7 +113,7 @@ Relax the filter when the user clearly wants short-term / exam coverage (`考试
 - [ ] `source_quote` supports the card (else drop the claim)?
 - [ ] LaTeX backslashes doubled for JSON?
 - [ ] Wording minimal; definitions include a concrete example when useful?
-- [ ] JA media: `lang:ja` present; pick **one** of `type:vocab` / `type:listening` / `type:reading` (do not stack vocab+listening)?
+- [ ] Media cards: if language study, `lang:<code>` + pick **one** of `type:vocab` / `type:listening` / `type:reading` (do not stack vocab+listening)?
 - [ ] Listening cards: question-side `<audio src>` present; prefer media-only / non-spoiler front?
 - [ ] Every media `src` is absolute `https://` (no `./`, `file://`, or bare disk paths) — run `upload-media` if not?
 
