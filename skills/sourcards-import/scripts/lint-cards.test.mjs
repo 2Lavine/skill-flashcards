@@ -119,7 +119,6 @@ test('unknown type tag → warning, exit 0', () => {
 });
 
 // ---- Japanese / listening media --------------------------------------------
-
 test('type:vocab and type:listening are known genre tags when used alone', () => {
   const vocab = lint({
     deck: '日语',

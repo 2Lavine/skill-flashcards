@@ -270,6 +270,7 @@ data.cards.forEach((c, idx) => {
       warn(`${tag}: odd number of "$" across question+answer — unbalanced math delimiters (possible LaTeX corruption).`);
     }
   }
+
 });
 
 // ---- 6. reference: cross-check deck/category against existing catalog -----

@@ -295,6 +295,8 @@ All examples below are meant to be imitated. They obey Form A/B, tags/aliases, n
 
 Note: "three components" is **not** one set card. If each component must be memorized, emit separate cards (as above for stability) rather than "list the three components."
 
+Also never write ordinal-index cards like "What is the 1st component of FSRS?" / "FSRS 的第 1 个变量是什么？" — cue by role or definition ("FSRS 中表示记忆保持多久的变量叫什么？"), not list position. See quality-rules.md §6b.
+
 ### Example 3 — Math / LaTeX escaping
 
 ```json
