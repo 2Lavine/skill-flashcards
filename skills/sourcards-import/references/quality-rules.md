@@ -38,10 +38,36 @@ Never hide the subject of a definition question inside `{{c1::...}}`.
 - Non-negotiable: do not ask "N types of Y" / "list all components".
 - One member per card. If the set is long, keep only high-yield members (density decides).
 
+### 6b. No ordinal-index cues (hard ban)
+
+Using list position as the only cue is **not** a valid atomic card. The number is scaffolding from a textbook outline, not knowledge you need years later.
+
+**Banned (question side):**
+- "X 的第 N 个原则/概念/步骤/要点是什么？"
+- "What is the Nth principle / concept / step of X?"
+- "X 的第三个要素叫什么？" / "Name the 2nd component of Y"
+- Any template where removing "第 N / Nth" leaves no other way to identify the answer
+
+**Why it fails:** reviews train "N → label", not the idea. Authors renumber; exams rarely ask "第 3 条"; interference across frameworks is brutal.
+
+**Rewrite — cue by content, not index:**
+
+| Bad | Good |
+|-----|------|
+| SOLID 的第 2 个原则是什么？ | SOLID 中，要求「对扩展开放、对修改关闭」的原则叫什么？ |
+| 道氏理论的第 3 个原则是什么？ | 道氏理论中，关于「主要趋势分三个阶段」的原则说什么？ |
+| FSRS 的第 1 个核心变量是什么？ | FSRS 中表示「记忆能保持多久」的变量叫什么？ |
+| What is the 3rd step of gradient descent? | In gradient descent, after computing the gradient, what do you do next? |
+
+Ordered processes: use pairwise **"what follows X?"** or overlapping clozes in a statement — never "step N is ___".
+
+**Narrow exception:** the ordinal **is** the conventional name of the fact itself (e.g. "Newton's Third Law", "美国宪法第 14 修正案", "热力学第三定律"). If the source presents it as a proper name people actually use, keep the name; do not invent "第 N 个" for anonymous list items.
+
 ## 7. Enumerations (ordered lists)
 
 - Prefer overlapping clozes in context, or pairwise "what follows X?" cards.
 - Grouping ("steps 1–3 are called ___") is acceptable when atomic steps are too thin.
+- Still never front a card with only "第 N 步 / step N" as the cue (see 6b).
 
 ## 8. Combat interference
 
@@ -100,6 +126,8 @@ Never hide the subject of a definition question inside `{{c1::...}}`.
 |--------------|-----|
 | "Explain the whole process" | Split into atomic steps |
 | "List 5 benefits of X" | One benefit per card, or skip |
+| "X 的第 N 个原则/概念是什么？" | Cue by definition/role/name; drop the ordinal |
+| "What is the Nth step of Y?" | "After Z, what comes next?" or content cloze |
 | Cloze inside "What is X?" | Form A |
 | Cloze inside "What is X?" with answer = term only | Convert to Form A, or rewrite front as a statement |
 | Category `数学/概率论` | `deck=数学`, `category=概率论` |

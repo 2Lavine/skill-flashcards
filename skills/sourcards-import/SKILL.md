@@ -25,18 +25,19 @@ These override density targets and examples:
 
 1. **One fact per card.** Answerable in ~3–5 seconds. Split complex ideas.
 2. **No sets / laundry lists.** Never "What are the N types of X?" Split into per-member cards (or overlapping clozes for ordered steps).
-3. **Form A vs Form B — never mix.**
+3. **No ordinal-index cues.** Never ask "What is the Nth principle/concept/step of X?" / "X 的第 N 个原则/概念是什么？" The ordinal is not retrieval-worthy knowledge — the learner memorizes a textbook index, not the idea. Identify the member by **content** (name, definition cue, role, what precedes/follows), not by list position. Exception only when the ordinal **is** the fact (e.g. constitutional amendment numbers, "Third Law of Thermodynamics" as a proper name).
+4. **Form A vs Form B — never mix.**
    - **Form A (definition Q&A):** literal question, **no** `{{cN::...}}`. Term appears plainly in the question; full answer on the back.
    - **Form B (cloze):** statement with a blank; front stays readable with the blank hidden; back is the deleted term(s), `;`-separated.
    - "什么是 X？" / "What is X?" / "X 指什么？" → **Form A only**. Never hide the subject of a question inside a cloze.
-4. **Tags:** foundational cards get `type:concept`; named instances get `type:entity`; else omit or `type:normal`. Every concept/entity card needs ≥1 `alias:<canonical name>` (plus common aliases).
-5. **Discipline:** `deck` = first-level discipline common name (Chinese); `category` = single second-level name, **no `/`**. Classify via disciplines.md. No pseudo-disciplines.
-6. **Provenance:**
+5. **Tags:** foundational cards get `type:concept`; named instances get `type:entity`; else omit or `type:normal`. Every concept/entity card needs ≥1 `alias:<canonical name>` (plus common aliases).
+6. **Discipline:** `deck` = first-level discipline common name (Chinese); `category` = single second-level name, **no `/`**. Classify via disciplines.md. No pseudo-disciplines.
+7. **Provenance:**
    - `source` = URL or file path only (batch-level). Omit if unknown. Never prose/summary/cropped text.
    - `course` = human title of the material (course/book/video). Optional.
    - `source_quote` = exact supporting sentence per card when available.
-7. **Math in JSON:** every LaTeX `\` must be doubled (`\\frac`, `\\sigma`). Single backslashes break or corrupt `JSON.parse`.
-8. **Precision > recall.** Prefer fewer true cards over padded trivia. Never invent facts the source does not support.
+8. **Math in JSON:** every LaTeX `\` must be doubled (`\\frac`, `\\sigma`). Single backslashes break or corrupt `JSON.parse`.
+9. **Precision > recall.** Prefer fewer true cards over padded trivia. Never invent facts the source does not support.
 
 ## Density control
 
@@ -106,6 +107,7 @@ Relax the filter when the user clearly wants short-term / exam coverage (`考试
 
 - [ ] One fact? 3–5s answer? Single unambiguous answer?
 - [ ] No sets / long enumerations left intact?
+- [ ] No ordinal-index cues ("第 N 个…是什么" / "the Nth principle of…") — cue by content, not list position?
 - [ ] Form A/B correct (no cloze inside "What is X?")?
 - [ ] Concept/entity tagged + has `alias:`?
 - [ ] `category` is a single name without `/`?
