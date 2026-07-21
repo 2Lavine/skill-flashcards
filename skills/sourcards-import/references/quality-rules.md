@@ -3,16 +3,37 @@
 Practical formulation rules for this skill (inspired by SuperMemo's Twenty Rules).  
 Use when a fact is borderline, wording is bloated, or two concepts interfere.
 
+## 0. Utility first — four cores (overrides almost everything)
+
+**Number one rule.** Do not train pure recitation of labels. Every keepable card should land on at least one core:
+
+| Core | Question to ask | Example front |
+|------|-----------------|---------------|
+| **有什么用** | What problem / situation / outcome is this for? | 「止损」主要解决交易中的什么问题？ |
+| **为什么有用** | Why does it matter? Mechanism? What failure does it prevent? | 为什么不移动止损容易把盈利单做成亏损单？ |
+| **怎么用** | When / how to apply? Steps, cues, trade-offs, next action? | 趋势行情里，何时把止损从入场点移到盈亏平衡？ |
+| **可迁移性** | Where else does the *pattern* reuse? Near (same domain) + far (shared structure, distant surface) | 止损的「先锁最大可承受损失」还能用在哪些交易外场景？ |
+
+**Gate before writing:**
+
+1. Can the source support **有什么用 / 为什么有用 / 怎么用 / 可迁移性** for this idea?
+2. If only a dictionary definition remains → **skip** (unless user asked for exam/recitation).
+3. If a definition is truly the working unit, keep it short and attach a mini-use in the answer: `用途：…` / `例如：…`.
+4. **Transfer quality:** near transfer must feel like the same move; far transfer must name the shared structure. No forced metaphors.
+
+**Rewrite habit:** "什么是 X？" → prefer "X 解决什么问题？" / "为什么需要 X？" / "何时/如何用 X？" / "同一模式还能用在哪？" when the source allows.
+
 ## 1. Understand before memorizing
 
 - Do not cardify text you cannot parse. Ambiguous source → skip or flag, do not guess.
-- Build a rough mental model first: foundations → intermediate → detail.
+- Build a rough mental model first: **use cases & decisions** → foundations needed for those → detail.
 - If a card needs a prerequisite, say so in the answer: "前提：已理解 X。"
 
 ## 2. Minimum information
 
-- One fact, one card.
+- One fact **or one usable skill**, one card.
 - Target 3–5 seconds to answer in review.
+- Prefer decision rules and applied consequences over glossary entries.
 - If answering requires a chain of reasoning, split the chain.
 
 ## 3. Cloze is a form, not a highlighter
@@ -87,8 +108,8 @@ Ordered processes: use pairwise **"what follows X?"** or overlapping clozes in a
 
 ## 11. Examples on definitions
 
-- Definition cards should include a concrete example when the source or common knowledge supplies one.
-- Pattern: `[定义]。例如：[例子]。`
+- If you must keep a definition, attach use: `[定义]。用途：[有什么用]。例如：[怎么用的例子]。`
+- Prefer skipping pure definitions when an application card already covers the idea.
 
 ## 12. Emotion / vividness
 
@@ -116,19 +137,22 @@ Ordered processes: use pairwise **"what follows X?"** or overlapping clozes in a
 
 ## 17. Prioritize
 
-- Order of keep: foundational concepts > applied facts > edge cases > trivia.
-- A false-positive card wastes future reviews; a missed low-value fact is cheap.
-- Density sets the budget; this section spends it.
+- Order of keep: **怎么用 / 有什么用 / 为什么有用 / 可迁移性** (usable cores) > foundational working concepts that unlock those cores > edge cases > pure definitions > trivia.
+- A false-positive definition card wastes future reviews; a missed low-value label is cheap.
+- Density sets the budget; section 0 spends it.
 
 ## Quick anti-patterns
 
 | Anti-pattern | Fix |
 |--------------|-----|
-| "Explain the whole process" | Split into atomic steps |
-| "List 5 benefits of X" | One benefit per card, or skip |
+| Pure "什么是 X？" with no use context | Rewrite to 有什么用 / 为什么有用 / 怎么用 / 可迁移性, or skip |
+| Forced far analogy (surface pun only) | Drop far transfer; keep near only if solid |
+| Glossary dump (term ↔ definition only) | Keep only terms that unlock decisions; add 用途/例子 in answer |
+| "Explain the whole process" | Split into atomic **how-to** steps |
+| "List 5 benefits of X" | One **有什么用** benefit per card, or skip |
 | "X 的第 N 个原则/概念是什么？" | Cue by definition/role/name; drop the ordinal |
 | "What is the Nth step of Y?" | "After Z, what comes next?" or content cloze |
 | Cloze inside "What is X?" | Form A |
-| Cloze inside "What is X?" with answer = term only | Convert to Form A, or rewrite front as a statement |
+| Cloze inside "What is X?" with answer = term only | Convert to Form A, or rewrite as use-oriented statement |
 | Category `数学/概率论` | `deck=数学`, `category=概率论` |
 | `source` = lesson summary | Move title to `course`; URI to `source`; else omit |
