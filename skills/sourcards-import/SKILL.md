@@ -7,6 +7,8 @@ description: SourCards flashcard import skill. Generate spaced-repetition flashc
 
 Transform learning material into well-formulated spaced-repetition cards, lint them, and import them.
 
+**North star:** cards train *use* and *transfer*, not encyclopedic recitation. For every keepable idea, prioritize — **有什么用** · **为什么有用** · **怎么用** · **可迁移性** (near + far transfer when the pattern is real). Utility beats coverage.
+
 ## Read on demand
 
 Do **not** reload everything every time. Open only what the current step needs:
@@ -23,21 +25,27 @@ Do **not** reload everything every time. Open only what the current step needs:
 
 These override density targets and examples:
 
-1. **One fact per card.** Answerable in ~3–5 seconds. Split complex ideas.
-2. **No sets / laundry lists.** Never "What are the N types of X?" Split into per-member cards (or overlapping clozes for ordered steps).
-3. **No ordinal-index cues.** Never ask "What is the Nth principle/concept/step of X?" / "X 的第 N 个原则/概念是什么？" The ordinal is not retrieval-worthy knowledge — the learner memorizes a textbook index, not the idea. Identify the member by **content** (name, definition cue, role, what precedes/follows), not by list position. Exception only when the ordinal **is** the fact (e.g. constitutional amendment numbers, "Third Law of Thermodynamics" as a proper name).
-4. **Form A vs Form B — never mix.**
-   - **Form A (definition Q&A):** literal question, **no** `{{cN::...}}`. Term appears plainly in the question; full answer on the back.
+1. **Utility first — four cores (number one).** Cardify what the learner can **use** and **transfer**, not what they can only recite. For each candidate idea, prefer cards that answer one of:
+   - **有什么用 (what for):** what problem / situation / outcome this serves.
+   - **为什么有用 (why it works):** the reason it matters, the mechanism, or the failure it prevents.
+   - **怎么用 (how to apply):** when to use it, the steps/cues, trade-offs, diagnosis, next action.
+   - **可迁移性 (transfer):** where else the same *pattern* applies — **近迁移** (same/adjacent domain) and, when a solid isomorphism exists, **远迁移** (unrelated surface, shared structure). Never force far transfer.
+   Gate: if none of the use cores can be answered from the source (only a bare name/definition remains), **skip** — unless the user explicitly wants exam/recitation coverage. Bare "What is X?" definitions are last resort; rewrite toward these cores when the source supports it.
+2. **One fact (or one usable skill) per card.** Answerable in ~3–5 seconds. Split complex ideas. A "fact" here is preferably a decision rule or applied consequence, not a dictionary entry.
+3. **No sets / laundry lists.** Never "What are the N types of X?" Split into per-member cards (or overlapping clozes for ordered steps). Prefer one card per *when to use member M* over a pure name list.
+4. **No ordinal-index cues.** Never ask "What is the Nth principle/concept/step of X?" / "X 的第 N 个原则/概念是什么？" The ordinal is not retrieval-worthy knowledge — the learner memorizes a textbook index, not the idea. Identify the member by **content** (name, definition cue, role, what precedes/follows), not by list position. Exception only when the ordinal **is** the fact (e.g. constitutional amendment numbers, "Third Law of Thermodynamics" as a proper name).
+5. **Form A vs Form B — never mix.**
+   - **Form A (definition / application Q&A):** literal question, **no** `{{cN::...}}`. For definitions, term appears plainly in the question; full answer on the back. Prefer application/scenario Form A when the source supports it.
    - **Form B (cloze):** statement with a blank; front stays readable with the blank hidden; back is the deleted term(s), `;`-separated.
-   - "什么是 X？" / "What is X?" / "X 指什么？" → **Form A only**. Never hide the subject of a question inside a cloze.
-5. **Tags:** foundational cards get `type:concept`; named instances get `type:entity`; else omit or `type:normal`. Every concept/entity card needs ≥1 `alias:<canonical name>` (plus common aliases).
-6. **Discipline:** `deck` = first-level discipline common name (Chinese); `category` = single second-level name, **no `/`**. Classify via disciplines.md. No pseudo-disciplines.
-7. **Provenance:**
+   - "什么是 X？" / "What is X?" / "X 指什么？" → **Form A only**. Never hide the subject of a question inside a cloze. Prefer rewriting pure definition fronts into the four cores when the source supports them: "X 解决什么问题？" / "为什么需要 X？" / "何时/如何用 X？" / "同一模式还能用在哪？".
+6. **Tags:** foundational *working* concepts get `type:concept`; named instances get `type:entity`; else omit or `type:normal`. Every concept/entity card needs ≥1 `alias:<canonical name>` (plus common aliases).
+7. **Discipline:** `deck` = first-level discipline common name (Chinese); `category` = single second-level name, **no `/`**. Classify via disciplines.md. No pseudo-disciplines.
+8. **Provenance:**
    - `source` = URL or file path only (batch-level). Omit if unknown. Never prose/summary/cropped text.
    - `course` = human title of the material (course/book/video). Optional.
    - `source_quote` = exact supporting sentence per card when available.
-8. **Math in JSON:** every LaTeX `\` must be doubled (`\\frac`, `\\sigma`). Single backslashes break or corrupt `JSON.parse`.
-9. **Precision > recall.** Prefer fewer true cards over padded trivia. Never invent facts the source does not support.
+9. **Math in JSON:** every LaTeX `\` must be doubled (`\\frac`, `\\sigma`). Single backslashes break or corrupt `JSON.parse`.
+10. **Precision > recall; utility > coverage.** Prefer fewer *usable* cards over padded trivia or encyclopedic definitions. Never invent facts the source does not support.
 
 ## Density control
 
@@ -74,11 +82,25 @@ Round to nearest 5. Soft guardrail only — never pad.
   (roughly: 500 Han chars ≈ 1000 English words of propositional load)
 - Mixed text: weight by the dominant script. If unsure, estimate atomic facts first, then reconcile with the target range.
 
-### Worth-remembering filter
+### Worth-remembering filter (utility gate)
 
-Default: skip a card unless the learner will still need it on a multi-year horizon.
+**Default priority:** practical use ≫ multi-year retention of pure labels.
 
-Relax the filter when the user clearly wants short-term / exam coverage (`考试`, `背 recitation`, `this week's quiz`). Even then, prefer atomic, high-yield facts over trivia.
+Skip a candidate unless the source supports **at least one** of the cores:
+
+1. **有什么用** — names a real problem, situation, or outcome this idea serves.
+2. **为什么有用** — explains why it matters / the mechanism / the failure it prevents.
+3. **怎么用** — gives when/how to apply, steps, cues, trade-offs, or next action.
+4. **可迁移性** — a reusable pattern with at least one honest near (or solid far) transfer.
+
+Also keep strong if **actionable / transferable / failure-preventing** even when worded differently — those map onto the cores.
+
+Still drop: bare synonyms, decorative history, glossary-only definitions with no use context, author vanity metrics, and "nice to know" trivia.
+
+Default also: prefer facts the learner still needs on a multi-year horizon *and* that pass the utility gate.
+
+Relax **only** when the user clearly wants short-term / exam coverage (`考试`, `背 recitation`, `this week's quiz`). Even then, prefer high-yield applied facts over pure recitation.
+
 
 ## Language defaults
 
@@ -93,7 +115,7 @@ Relax the filter when the user clearly wants short-term / exam coverage (`考试
 2. **Identify genre** — conversation / narrative / expository / textbook.
 3. **Estimate target count** — using language-aware size units. Guardrail, not quota.
 4. **Parse input** — concepts, facts, domain, language, locatable URI.
-5. **Extract atomic facts** — filter by density, then worth-remembering.
+5. **Extract atomic facts / skills** — filter by density, then the utility / worth-remembering gate (use > recite).
 6. **Reconcile count** — if far outside target, re-check over/under-cardifying; never pad.
 7. **Set batch provenance** — `source` URI if known; `course` title if known; omit rather than invent.
 8. **Formulate cards** — Form A or B per fact; apply hard constraints; see quality-rules.md when stuck.
@@ -105,7 +127,10 @@ Relax the filter when the user clearly wants short-term / exam coverage (`考试
 
 ## Quality checklist
 
-- [ ] One fact? 3–5s answer? Single unambiguous answer?
+- [ ] **Utility first:** the card targets 有什么用 / 为什么有用 / 怎么用 / 可迁移性 — not pure label recitation?
+- [ ] If the front is "什么是 X？" / "What is X?", rewrite toward what-for / why / how-to-apply / transfer when the source allows.
+- [ ] Transfer cards (if any): near = same-domain reuse; far = shared structure, not surface puns — skip forced analogies.
+- [ ] One fact / usable skill? 3–5s answer? Single unambiguous answer?
 - [ ] No sets / long enumerations left intact?
 - [ ] No ordinal-index cues ("第 N 个…是什么" / "the Nth principle of…") — cue by content, not list position?
 - [ ] Form A/B correct (no cloze inside "What is X?")?
@@ -165,10 +190,21 @@ If API key missing or API unreachable, output JSON for manual Import in the app.
 
 ## Question type palette
 
-1. **Direct (Form A):** What / Why / How
-2. **Cloze (Form B):** statement with `{{c1::...}}`
-3. **Comparison:** key difference between X and Y
-4. **Cause-effect:** what happens to X when Y
-5. **Application:** given scenario, what applies
+Map every card to one of the four cores when possible. Prefer use and transfer over label recall:
+
+| Core | Typical fronts |
+|------|----------------|
+| **有什么用** | X 解决什么问题？ / 什么场景需要 X？ / What is X for? |
+| **为什么有用** | 为什么 X 有效？ / X 避免什么失败？ / Why does X matter here? |
+| **怎么用** | 何时用 X？ / 给定场景下一步？ / How do you apply X? |
+| **可迁移性** | 同一模式还能用在哪些同类场景？ / 哪个不相关领域共享同一结构？ |
+
+Forms (any core):
+
+1. **Application (preferred):** scenario / symptom / constraint → what applies or next action (**怎么用**)
+2. **Cause-effect / diagnosis:** what happens when Y; why it works; failure mode (**为什么有用** / **怎么用**)
+3. **Comparison (decision):** when choose X over Y (**怎么用** / **有什么用**)
+4. **Direct (Form A):** lead with what-for / why / how; bare "What is X?" only when a short working definition is itself the unit
+5. **Cloze (Form B):** `{{c1::...}}` for procedure slots, thresholds, in-context terms — still phrase the statement around use when possible
 
 Use [references/format.md](references/format.md) for schema, cloze details, math escaping, and golden examples.
