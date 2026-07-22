@@ -1,41 +1,50 @@
-# Library lint API
+# Library lint snapshot contract
 
-## Endpoint
+## Input source
 
-```
-GET https://sourcard.sourmonkey.xyz/api/library-lint
-Authorization: Bearer <FLASHCARD_API_KEY>
-```
+The outer-agent CLI is snapshot-only. Ask the user to export and provide a
+complete library organization snapshot; do not attempt to authenticate the CLI
+to a live account.
 
-(Or the API-key header style your SourCards client already uses for import.)
+`GET /api/library-lint` is session-only and is **not** on the Personal
+Integration Token allowlist. Personal Integration Tokens (`sc_int_…`, env
+`FLASHCARD_API_KEY`) cover only:
 
-## Response
+| Method | Path | Permission |
+|--------|------|------------|
+| `POST` | `/api/import` | `imports:create` |
+| `POST` | `/api/media` | `media:upload` |
+| `GET` | `/api/decks`, `/api/categories` | `catalog:read` |
+| `GET` | `/api/imports` | `imports:read` |
+| `POST` | `/api/imports/:id/rollback` | `imports:rollback` |
 
-Same JSON as the pure core / CLI:
+The `catalog:read` responses are not a substitute for the export: they do not
+provide all card counts and uncategorized aggregates required by organization
+lint. Do not claim that those endpoints can reconstruct a complete snapshot.
+
+## Snapshot shape
 
 ```json
 {
-  "summary": {
-    "total_decks": 10,
-    "total_cards": 240,
-    "total_categories": 32,
-    "total_uncategorized": 5,
-    "total_issues": 7
-  },
-  "issues": []
+  "decks": [{ "id": "d1", "name": "心理学", "cardCount": 12 }],
+  "categories": [
+    { "deckId": "d1", "deckName": "心理学", "category": "认知", "cardCount": 4 }
+  ],
+  "uncategorized": [
+    { "deckId": "d1", "deckName": "心理学", "cardCount": 2 }
+  ]
 }
 ```
+
+`decks` and `categories` are required arrays. Include `uncategorized` so the
+report can compute the complete backlog rather than silently treating missing
+data as zero.
 
 ## CLI
 
 ```bash
-export FLASHCARD_API_KEY=...
-sourcards-lint-library --base https://sourcard.sourmonkey.xyz
-# pretty print is default; add --json for machine-only JSON on stdout
-```
-
-Offline:
-
-```bash
 sourcards-lint-library path/to/snapshot.json
+sourcards-lint-library path/to/snapshot.json --json
 ```
+
+The command reads local JSON only and never consumes `FLASHCARD_API_KEY`.

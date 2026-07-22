@@ -99,14 +99,19 @@ node skills/sourcards-import/scripts/upload-media.mjs cards.json --out cards.jso
 node skills/sourcards-import/scripts/lint-cards.mjs cards.json
 node skills/sourcards-import/scripts/lint-cards.mjs cards.json --catalog https://sourcard.sourmonkey.xyz
 
-# library organization (snapshot or live API)
+# library organization (complete exported snapshot only)
 node skills/sourcards-library-lint/scripts/lint-library.mjs snapshot.json
-node skills/sourcards-library-lint/scripts/lint-library.mjs --base https://sourcard.sourmonkey.xyz
 
 npm test
 ```
 
-Requires `FLASHCARD_API_KEY` for catalog cross-check and import API calls.
+Requires a **Personal Integration Token** in `FLASHCARD_API_KEY` (prefix
+`sc_int_…`) for catalog cross-check and import/media API calls. New tokens
+default to exactly: `imports:create`, `imports:read`, `imports:rollback`,
+`media:upload`, `catalog:read`. They never create sessions and cannot access
+card bodies, reviews, Coach, settings, billing, or account APIs. Official
+media upload also needs the owner's `media:upload` entitlement and quotas.
+See [api.md](skills/sourcards-import/references/api.md).
 
 Media hosting is **decoupled** from the SourCards app server. Configure `SOURCARDS_MEDIA_*` (R2/S3, http gateway, map file, or shell command) per [media.md](skills/sourcards-import/references/media.md).
 

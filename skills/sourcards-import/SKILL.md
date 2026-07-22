@@ -16,10 +16,10 @@ Do **not** reload everything every time. Open only what the current step needs:
 | File | Read when |
 |------|-----------|
 | [references/format.md](references/format.md) | Writing/editing card JSON, cloze form, tags, math/LaTeX, or examples |
-| [references/media.md](references/media.md) | Local image/audio → official `/api/media` (same `FLASHCARD_API_KEY` as import) or GitHub BYO |
+| [references/media.md](references/media.md) | Local image/audio → official `/api/media` (same Personal Integration Token as import) or GitHub BYO |
 | [references/disciplines.md](references/disciplines.md) | Assigning `deck` / `category` |
 | [references/quality-rules.md](references/quality-rules.md) | Unsure whether a fact deserves a card, or how to split/word it |
-| [references/api.md](references/api.md) | Import, list batches, or roll back a bad import |
+| [references/api.md](references/api.md) | Personal Integration Token scopes; import, catalog, list batches, or roll back |
 
 ## Hard constraints
 
@@ -122,7 +122,7 @@ Relax **only** when the user clearly wants short-term / exam coverage (`考试`,
 9. **Assign discipline & tags** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`.
 10. **Self-validate** — run the checklist below on every card.
 11. **Output JSON** — one valid JSON object (code block or file). Local media paths OK while drafting.
-12. **Resolve media** — if any card embeds local/relative image or audio, run `upload-media` (default: official `/api/media` with `$FLASHCARD_API_KEY`) so every `src` is absolute `https://` before lint. See [media.md](references/media.md).
+12. **Resolve media** — if any card embeds local/relative image or audio, run `upload-media` (default: official `/api/media` with Personal Integration Token `$FLASHCARD_API_KEY`; needs owner `media:upload` entitlement) so every `src` is absolute `https://` before lint. See [media.md](references/media.md).
 13. **Lint, then import** — fix blocking lint errors before POST. On bad import, roll back and re-import.
 
 ## Quality checklist
@@ -160,16 +160,17 @@ SKILL_ROOT="skills/sourcards-import"   # inside this plugin repo
 # sourcards-upload-media cards.json --out cards.json
 
 # local/relative media → absolute https via official upload (default)
-# Uses the SAME key as import: $FLASHCARD_API_KEY
-#   (env var first; else Settings → API Keys → Create key — see api.md)
-# POST https://sourcard.sourmonkey.xyz/api/media  (Pro / pro_trial)
-# Free / BYO only: --provider github  (see media.md)
+# Uses the SAME Personal Integration Token as import: $FLASHCARD_API_KEY
+#   (env var first; else Settings → Integrations → Personal Integration Tokens)
+# POST https://sourcard.sourmonkey.xyz/api/media
+#   token permission media:upload + owner entitlement media:upload (Lite/Lifetime)
+# Free / no media entitlement: --provider github  (see media.md)
 node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
 
 # format lint only
 node "$SKILL_ROOT/scripts/lint-cards.mjs" cards.json
 
-# + catalog cross-check (recommended; needs $FLASHCARD_API_KEY)
+# + catalog cross-check (recommended; needs $FLASHCARD_API_KEY → catalog:read)
 node "$SKILL_ROOT/scripts/lint-cards.mjs" cards.json \
   --catalog https://sourcard.sourmonkey.xyz
 ```
@@ -178,15 +179,18 @@ node "$SKILL_ROOT/scripts/lint-cards.mjs" cards.json \
 - **Exit 0 + warnings:** quality drift (prose `source`, `/` in category, missing `alias:`, mixed cloze). Prefer fixing before import.
 - **Exit 0 clean:** safe to import.
 
-Import, list batches, and rollback: [references/api.md](references/api.md).
+Import, catalog, list batches, and rollback: [references/api.md](references/api.md).
+Token scopes are fixed to five permissions (`imports:create|read|rollback`,
+`media:upload`, `catalog:read`) — no card bodies, reviews, Coach, settings,
+billing, or account APIs.
 
 **Bad-import recovery**
 
-1. `GET /api/imports` → find `importId` (filter by `sourceUri` / time / deck).
-2. `POST /api/imports/:importId/rollback` → delete that batch.
+1. `GET /api/imports` (`imports:read`) → find `importId` (filter by `sourceUri` / time / deck).
+2. `POST /api/imports/:importId/rollback` (`imports:rollback`) → delete that owner-scoped batch.
 3. Fix payload → lint clean → import again.
 
-If API key missing or API unreachable, output JSON for manual Import in the app.
+If the Personal Integration Token is missing or the API is unreachable, output JSON for manual Import in the app.
 
 ## Question type palette
 

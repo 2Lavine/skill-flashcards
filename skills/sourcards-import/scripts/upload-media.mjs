@@ -437,9 +437,12 @@ async function uploadHttp(src, localPath, body, contentType, key) {
     data = null;
   }
   if (!res.ok) {
-    if (res.status === 403 && data?.error === 'pro_required') {
+    if (
+      res.status === 403 &&
+      (data?.error === 'media_upload_required' || data?.error === 'pro_required' || data?.error === 'entitlement_required')
+    ) {
       throw new Error(
-        `官方媒体上传需要 Pro（403 pro_required）。Free 请改用 GitHub：--provider github（需 SOURCARDS_MEDIA_REPO_DIR）。详情: ${data?.message || text.slice(0, 120)}`,
+        `官方媒体上传需要 media:upload 权益（Lite/Lifetime 或显式授权；403）。Free 请改用 GitHub：--provider github（需 SOURCARDS_MEDIA_REPO_DIR）。详情: ${data?.message || data?.error || text.slice(0, 120)}`,
       );
     }
     if (res.status === 401) {
