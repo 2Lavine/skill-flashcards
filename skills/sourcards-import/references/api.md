@@ -1,17 +1,86 @@
 # Import API Reference
 
+## Personal Integration Token
+
+Import, media, catalog, and batch recovery all use a **Personal Integration Token**
+(prefix `sc_int_…`). This is **not** a login session and is **not** a general API key.
+
+Default permissions on every new token (exactly five):
+
+```text
+imports:create
+imports:read
+imports:rollback
+media:upload
+catalog:read
+```
+
+### Approved routes only
+
+| Method | Path | Required permission |
+|--------|------|---------------------|
+| `POST` | `/api/import` | `imports:create` |
+| `POST` | `/api/media` | `media:upload` |
+| `GET` | `/api/decks` | `catalog:read` |
+| `GET` | `/api/categories` | `catalog:read` |
+| `GET` | `/api/imports` | `imports:read` |
+| `POST` | `/api/imports/:id/rollback` | `imports:rollback` |
+
+Every route verifies **exactly** that permission and derives the owner from the
+token `referenceId`. All reads and mutations are **owner-scoped**.
+
+### What the token cannot do
+
+Tokens never create authenticated sessions and **cannot** access:
+
+- card bodies (beyond what the import payload itself contains)
+- reviews / FSRS state
+- Coach data or LLM generation
+- settings, billing, account, or admin surfaces
+- any route outside the table above
+
+### Auth headers
+
+Send the token as either:
+
+```text
+x-api-key: $FLASHCARD_API_KEY
+```
+
+or
+
+```text
+Authorization: Bearer $FLASHCARD_API_KEY
+```
+
+**Finding the token:** check `FLASHCARD_API_KEY` in the environment first
+(`echo "$FLASHCARD_API_KEY"`). If missing, create one in the app:
+
+```text
+Settings → Integrations → Personal Integration Tokens → Create
+```
+
+The full value is shown **once** — store it as `FLASHCARD_API_KEY`. Older
+general API keys are not upgraded; revoke them and create a Personal Integration
+Token.
+
 ## Endpoint
 
 ```
 POST https://sourcard.sourmonkey.xyz/api/import
 Content-Type: application/json
+x-api-key: $FLASHCARD_API_KEY
 ```
 
-Import is **JSON only** — no multipart/binary media. Embed images and audio as absolute `https://` URLs inside each card's `question` / `answer` markdown.
+Import is **JSON only** — no multipart/binary media. Embed images and audio as
+absolute `https://` URLs inside each card's `question` / `answer` markdown.
 
-### Official media upload (Pro) — skill default
+### Official media upload — skill default
 
-Same auth as import: **`x-api-key: $FLASHCARD_API_KEY`** (see Authentication below).
+Same token as import. Requires token permission `media:upload` **and** the
+owner's effective entitlement `media:upload` (Lite / Lifetime membership defaults,
+or an explicit grant). Free accounts without that entitlement get
+`403` and should use GitHub BYO (`upload-media --provider github`).
 
 ```
 POST https://sourcard.sourmonkey.xyz/api/media
@@ -20,10 +89,12 @@ x-api-key: $FLASHCARD_API_KEY
 # field: file
 ```
 
-- **Pro / pro_trial only** (`403 pro_required` for free).
 - Response: `{ "ok": true, "url": "https://…", "key": "users/…", "bytes": N }`.
-- Skill default: when `FLASHCARD_API_KEY` is set, `upload-media` uses this endpoint automatically (no extra media token).
-- Free users: GitHub BYO — `upload-media --provider github` — see [media.md](media.md).
+- Skill default: when `FLASHCARD_API_KEY` is set, `upload-media` uses this
+  endpoint automatically (no extra media token).
+- Server still enforces daily upload count, daily bytes, and total hosted-bytes
+  quotas from effective entitlements.
+- Free / no media entitlement: GitHub BYO — see [media.md](media.md).
 
 ## Request Body
 
@@ -82,18 +153,6 @@ The `importId` identifies the batch. In the app, **Import History** lists each b
 (deck, source URI, card count, time) and lets the user roll one back — deleting all its
 cards in one action.
 
-## Authentication
-
-The app is multi-user. Importing **requires** a valid API key — without it the
-endpoint returns **401** and nothing is saved. Send the key in the `x-api-key`
-header.
-
-**Finding the key:** It is normally already present as the `FLASHCARD_API_KEY`
-environment variable — check there first (e.g. `echo "$FLASHCARD_API_KEY"`) and
-use it if set. Only if it is missing should you ask the user to generate one in
-the app: **Settings → API Keys → Create key** (shown once — store it as
-`FLASHCARD_API_KEY`).
-
 ## Auto-Import via curl
 
 ```bash
@@ -107,6 +166,20 @@ curl -s -X POST https://sourcard.sourmonkey.xyz/api/import \
 }'
 ```
 
+Token import batches are capped (200 cards per request). Missing or invalid tokens
+return **401** and nothing is saved.
+
+## Catalog (lint cross-check)
+
+```
+GET https://sourcard.sourmonkey.xyz/api/decks
+GET https://sourcard.sourmonkey.xyz/api/categories
+Header: x-api-key: $FLASHCARD_API_KEY
+```
+
+Requires `catalog:read`. Used by `lint-cards --catalog` to cross-check deck /
+category names against the owner's library. Does **not** return card bodies.
+
 ## Rollback / Delete a Batch
 
 Each successful import returns an `importId`. To **delete an entire batch** (e.g. to
@@ -114,8 +187,11 @@ fix a bad import, remove duplicates, or re-import a corrected version), roll it 
 
 ```
 POST https://sourcard.sourmonkey.xyz/api/imports/:importId/rollback
-Header: x-api-key: <FLASHCARD_API_KEY>
+Header: x-api-key: $FLASHCARD_API_KEY
 ```
+
+Requires `imports:rollback`. Rollback deletes only cards that belong to **that**
+import and **that** token owner.
 
 Response:
 
@@ -130,15 +206,17 @@ To find an `importId` (e.g. before rolling back), list all batches:
 
 ```
 GET https://sourcard.sourmonkey.xyz/api/imports
-Header: x-api-key: <FLASHCARD_API_KEY>
+Header: x-api-key: $FLASHCARD_API_KEY
 ```
 
-Returns `{ "imports": [ { "id", "deckName", "sourceUri", "cardCount", "createdAt" }, ... ] }`.
-Filter by `sourceUri` to locate a specific batch's `id`.
+Requires `imports:read`. Returns
+`{ "imports": [ { "id", "deckName", "sourceUri", "cardCount", "createdAt" }, ... ] }`.
+Filter by `sourceUri` to locate a specific batch's `id`. Owner-scoped only — no
+card bodies.
 
 > This is the same action the app's **Import History → roll back** button performs.
 
 ## Fallback
 
-If no API key is available, or the API is unreachable / returns 401, output the
-JSON for manual import via the app's Import button in the browser.
+If no Personal Integration Token is available, or the API is unreachable / returns
+401, output the JSON for manual import via the app's Import button in the browser.

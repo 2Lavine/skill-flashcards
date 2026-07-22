@@ -22,21 +22,27 @@ Root-relative paths like `/demo/ja/neko.mp3` are **SPA demo assets only** — no
 
 ## Agent workflow (default = official upload)
 
-**Auth is the same as import:** `FLASHCARD_API_KEY` in the environment.  
-Check `echo "$FLASHCARD_API_KEY"` first; if missing, user creates one in the app: **Settings → API Keys → Create key** (see [api.md](api.md)).
+**Auth is the same Personal Integration Token as import:** `FLASHCARD_API_KEY`
+(prefix `sc_int_…`) in the environment. Check `echo "$FLASHCARD_API_KEY"` first;
+if missing, user creates one in the app:
+**Settings → Integrations → Personal Integration Tokens** (see [api.md](api.md)).
+
+Official upload also needs the owner's effective entitlement `media:upload`
+(Lite / Lifetime defaults, or an explicit grant) and remaining media quotas.
 
 ```text
 1. Formulate cards.json  (may embed ./local media paths)
 2. node scripts/upload-media.mjs cards.json --out cards.json
-   → default: POST /api/media with x-api-key: $FLASHCARD_API_KEY  (Pro)
-3. node scripts/lint-cards.mjs cards.json [--catalog …]
-4. POST /api/import with the same x-api-key  (see api.md)
+   → default: POST /api/media with x-api-key: $FLASHCARD_API_KEY
+     (permission media:upload + entitlement media:upload)
+3. node scripts/lint-cards.mjs cards.json [--catalog …]  (catalog:read)
+4. POST /api/import with the same x-api-key  (imports:create; see api.md)
 ```
 
 ```bash
 SKILL_ROOT="skills/sourcards-import"   # or package install path
 
-# Requires FLASHCARD_API_KEY (same as import) — Pro / pro_trial for /api/media
+# Requires FLASHCARD_API_KEY (Personal Integration Token) + media:upload entitlement
 node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
 # or: sourcards-upload-media cards.json --out cards.json
 ```
@@ -55,26 +61,28 @@ node scripts/upload-media.mjs cards.json \
 
 | Path | Who | Skill |
 |------|-----|--------|
-| **Official** `POST /api/media` | **Pro / pro_trial** | **Default** when `FLASHCARD_API_KEY` is set |
-| **GitHub BYO** public repo + jsDelivr | Any plan (incl. free) | `--provider github` |
+| **Official** `POST /api/media` | Owner has effective `media:upload` (Lite / Lifetime defaults or explicit grant) | **Default** when `FLASHCARD_API_KEY` is set |
+| **GitHub BYO** public repo + jsDelivr | Any membership (incl. Free) | `--provider github` |
 
 Official store is SourCards R2. Schema unchanged — only URLs in markdown.
+Token permission `media:upload` alone is not enough — the server also checks
+the owner's entitlement and daily/total media quotas.
 
 ## Providers
 
 | Provider | When | Needs |
 |----------|------|--------|
-| **`http`** (default) | Official Pro API | **`FLASHCARD_API_KEY`** (same as import). Optional `SOURCARDS_MEDIA_UPLOAD_URL` (default `https://sourcard.sourmonkey.xyz/api/media`) |
+| **`http`** (default) | Official media API | **`FLASHCARD_API_KEY`** (Personal Integration Token, same as import). Optional `SOURCARDS_MEDIA_UPLOAD_URL` (default `https://sourcard.sourmonkey.xyz/api/media`) |
 | **`github`** | Free / BYO | `SOURCARDS_MEDIA_REPO_DIR` + `SOURCARDS_MEDIA_GITHUB_BASE_URL` |
 | **`s3`** | Personal R2/S3 (power user) | `SOURCARDS_MEDIA_S3_*` |
 | `map` / `command` | Escape hatches | see below |
 
-### How the skill finds the API key
+### How the skill finds the Personal Integration Token
 
 Same rules as import / catalog lint:
 
-1. **`process.env.FLASHCARD_API_KEY`** (shell export, Claude session, monorepo `.env` / `.env.local` auto-load)
-2. If missing → ask user: **Settings → API Keys → Create key**, store as `FLASHCARD_API_KEY`
+1. **`process.env.FLASHCARD_API_KEY`** (shell export, Claude session, monorepo `.env` / `.env.local` auto-load) — prefix `sc_int_…`
+2. If missing → ask user: **Settings → Integrations → Personal Integration Tokens → Create**, store as `FLASHCARD_API_KEY`
 3. Optional override token: `SOURCARDS_MEDIA_UPLOAD_TOKEN` (rarely needed)
 
 `upload-media` also auto-loads monorepo `.env.local` / `.env` for missing keys (never overrides already-set env).
@@ -156,7 +164,9 @@ jsDelivr may lag briefly on brand-new paths after push. Object keys include a co
 | `SOURCARDS_MEDIA_MAX_IMAGE_BYTES` | Default 8 MiB |
 | `SOURCARDS_MEDIA_MAX_AUDIO_BYTES` | Default 20 MiB |
 
-**Official media reuses `FLASHCARD_API_KEY`** (same as import). Personal S3/GitHub BYO uses their own env vars, not that key.
+**Official media reuses the Personal Integration Token (`FLASHCARD_API_KEY`)**
+(same as import; requires `media:upload` permission + entitlement). Personal
+S3/GitHub BYO uses their own env vars, not that token.
 
 ### Object keys
 
@@ -243,6 +253,6 @@ upload-media.mjs [cards.json] [--out file|-] [--provider name]
 
 ## Non-goals
 
-- No SourCards app `/api/media` in this skill path
+- No binary media inside `POST /api/import`; official uploads use the separate `POST /api/media` route
 - Import rollback does **not** delete CDN objects
 - No automatic remote→CDN re-host of already-https URLs
