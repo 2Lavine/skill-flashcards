@@ -13,12 +13,12 @@ Do **not** invent `audioUrl` / `imageUrl` fields. See [format.md](format.md).
 
 | Stage | Allowed src |
 |-------|-------------|
-| Drafting cards | Local / relative paths (`./clips/neko.mp3`) so the agent can point at files on disk |
+| Drafting cards | Local / relative paths (`./clips/sample.mp3`) so the agent can point at files on disk |
 | **Before import** | Every media `src` must be **absolute `https://…`** |
 
 Relative, `file://`, and bare disk paths will not load in the web/desktop/mobile review hosts. `lint-cards` warns on them; `upload-media` rewrites them after upload.
 
-Root-relative paths like `/demo/ja/neko.mp3` are **SPA demo assets only** — not a model for user content.
+Root-relative paths like `/demo/media/sample-a.mp3` are **SPA demo assets only** — not a model for user content.
 
 ## Agent workflow (default = official upload)
 

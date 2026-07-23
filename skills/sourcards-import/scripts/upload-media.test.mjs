@@ -86,7 +86,7 @@ test('isPublicHttpsMediaSrc / needsMediaUpload / classifyMediaSrc', () => {
   assert.equal(isPublicHttpsMediaSrc('http://x/a.mp3'), false);
   assert.equal(needsMediaUpload('./a.mp3'), true);
   assert.equal(needsMediaUpload('https://x/a.mp3'), false);
-  assert.equal(needsMediaUpload('/demo/ja/a.mp3'), false);
+  assert.equal(needsMediaUpload('/demo/media/a.mp3'), false);
   assert.equal(classifyMediaSrc('https://x'), 'https');
   assert.equal(classifyMediaSrc('http://x'), 'http');
   assert.equal(classifyMediaSrc('data:image/png;base64,xx'), 'data');
