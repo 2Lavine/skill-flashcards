@@ -130,8 +130,9 @@ The API accepts these card fields:
 | `tags` | Yes (JSON array). Use `type:concept`, `type:entity`, optional `type:normal`. Every `type:concept` / `type:entity` card must include at least one `alias:<canonical name>` tag; add more aliases for abbreviations or alternate surface forms. |
 | `category` | Yes — second-level discipline under the deck (Chinese, single name, no `/`); decide it yourself |
 | `source_quote` | No — stored per card; shown under a revealed card in the review app |
+| `studyOrder` | No — optional 0-based reading order within the batch; defaults to the card's array position. Prefer array order over manual numbers. |
 
-> The app computes priority numbers, hierarchy pointers, and traversal indices on its own from the Concept Tags. Generated cards only need the right `type:*` tag.
+> The app preserves card array order as `studyOrder`, its single per-card review priority/reading order field. It computes hierarchy pointers and traversal indices on its own from the Concept Tags. Generated cards only need the right `type:*` tag and the intended array order; do not emit `reviewPriority` or `review_priority`.
 
 ## Concept Tag Ordering
 
@@ -142,6 +143,8 @@ Use Concept Tags on every generated card to influence review order without manua
 - Foundational definitions/principles → `tags` includes `type:concept` and at least one `alias:<canonical name>`.
 - Concrete named examples/components/cases → `tags` includes `type:entity` and at least one `alias:<canonical name>`.
 - Supporting facts/procedures/edge cases → no type tag (or `type:normal`) and regular topical tags.
+
+Within a batch, card array position becomes `studyOrder` and controls reading order. Keep the array in the intended study order; never output `reviewPriority` / `review_priority`.
 
 ## Response
 

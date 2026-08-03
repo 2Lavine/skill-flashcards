@@ -170,6 +170,10 @@ data.cards.forEach((c, idx) => {
   if (!c.question || typeof c.question !== 'string') err(`${tag}: missing "question".`);
   if (!c.answer || typeof c.answer !== 'string') err(`${tag}: missing "answer".`);
 
+  if ('reviewPriority' in c || 'review_priority' in c) {
+    warn(`${tag}: legacy reviewPriority/review_priority is deprecated — keep cards in array order; the app stores that as studyOrder.`);
+  }
+
   if (typeof c.question === 'string') scanCtrlChars(c.question, `${tag}.question`);
   if (typeof c.answer === 'string') scanCtrlChars(c.answer, `${tag}.answer`);
 

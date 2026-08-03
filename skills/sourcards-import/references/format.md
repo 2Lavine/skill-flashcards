@@ -32,8 +32,9 @@
 | `cards[].tags` | No | 2–4 topical tags plus type/alias tags. Hierarchy: `type:concept` / `type:entity` / optional `type:normal`. Genre (JA etc.): `type:vocab` / `type:listening` / `type:reading`. Every concept/entity card needs ≥1 `alias:<name>`. |
 | `cards[].category` | No | Second-level discipline under the deck — single Chinese name, **no `/`**. |
 | `cards[].source_quote` | No | Exact supporting sentence from the source. Shown under a revealed card. |
+| `cards[].studyOrder` | No | Optional 0-based reading order within the batch. Defaults to the card's array position; prefer array order over manual numbers. |
 
-The app derives review priority / hierarchy from `type:*` tags. Do not invent priority fields.
+The app preserves card array order as `studyOrder` — its single per-card review priority/reading order field. It derives hierarchy from `type:*` tags. Do not emit `reviewPriority` or `review_priority`.
 
 ## Concept tags & ordering
 
@@ -44,6 +45,8 @@ Same due-time bucket order:
 3. normal / `type:normal` — procedures, applications, edge cases
 
 `alias:<name>` is the linkable surface form. Required on every concept/entity card. Add abbreviations and alternate scripts when useful (`alias:FSRS`, `alias:间隔重复`).
+
+Within a batch, keep cards in the reading order you want to study them; the app stores that array position as `studyOrder`. Manual `reviewPriority` / `review_priority` fields are deprecated and ignored.
 
 ## Cloze format
 

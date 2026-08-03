@@ -46,6 +46,7 @@ These override density targets and examples:
    - `source_quote` = exact supporting sentence per card when available.
 9. **Math in JSON:** every LaTeX `\` must be doubled (`\\frac`, `\\sigma`). Single backslashes break or corrupt `JSON.parse`.
 10. **Precision > recall; utility > coverage.** Prefer fewer *usable* cards over padded trivia or encyclopedic definitions. Never invent facts the source does not support.
+11. **No manual priority fields.** Card array order is the review priority/reading order. The app stores it as `studyOrder`; never emit `reviewPriority` or `review_priority`.
 
 ## Density control
 
@@ -139,6 +140,7 @@ Relax **only** when the user clearly wants short-term / exam coverage (`考试`,
 - [ ] `source` is URI/path or omitted (not prose)?
 - [ ] `source_quote` supports the card (else drop the claim)?
 - [ ] LaTeX backslashes doubled for JSON?
+- [ ] No legacy `reviewPriority` / `review_priority` field; card array order expresses reading order?
 - [ ] Wording minimal; definitions include a concrete example when useful?
 - [ ] Media cards: if language study, `lang:<code>` + pick **one** of `type:vocab` / `type:listening` / `type:reading` (do not stack vocab+listening)?
 - [ ] Listening cards: question-side `<audio src>` present; prefer media-only / non-spoiler front?

@@ -118,6 +118,15 @@ test('unknown type tag → warning, exit 0', () => {
   assert.match(out, /unknown type tag "type:conept"/);
 });
 
+test('legacy reviewPriority field → warning, exit 0', () => {
+  const { code, out } = lint({
+    deck: '数学',
+    cards: [{ question: 'q', answer: 'a', reviewPriority: 5 }],
+  });
+  assert.equal(code, 0);
+  assert.match(out, /reviewPriority.*deprecated|deprecated.*reviewPriority/);
+});
+
 // ---- Japanese / listening media --------------------------------------------
 test('type:vocab and type:listening are known genre tags when used alone', () => {
   const vocab = lint({
