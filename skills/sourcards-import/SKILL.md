@@ -44,7 +44,7 @@ These override density targets and examples:
    - `source` = URL or file path only (batch-level). Omit if unknown. Never prose/summary/cropped text.
    - `course` = human title of the material (course/book/video). Optional.
    - `source_quote` = exact supporting sentence per card when available.
-9. **Math in JSON:** every LaTeX `\` must be doubled (`\\frac`, `\\sigma`). Single backslashes break or corrupt `JSON.parse`.
+9. **Math in JSON:** wrap **every** formula in `$$...$$` — display only. The card renderer ignores single-dollar `$...$`, which shows up on cards as literal text (e.g. `$233$`). Every LaTeX `\` must be doubled (`\\frac`, `\\sigma`). Single backslashes break or corrupt `JSON.parse`.
 10. **Precision > recall; utility > coverage.** Prefer fewer *usable* cards over padded trivia or encyclopedic definitions. Never invent facts the source does not support.
 11. **No manual priority fields.** Card array order is the review priority/reading order. The app stores it as `studyOrder`; never emit `reviewPriority` or `review_priority`.
 

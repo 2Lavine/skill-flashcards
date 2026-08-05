@@ -190,8 +190,7 @@ For non-language subjects (biology diagrams, UI screenshots, lecture clips), you
 
 ## Math / LaTeX
 
-
-Inline `$...$`, display `$$...$$`. Review app renders with KaTeX.
+**Cards: wrap every formula in `$$...$$`.** The card renderer treats only `$$...$$` as math (KaTeX display). A single-dollar `$...$` is NOT rendered on cards — it shows up as literal text (e.g. `$233$`). (Inline `$...$` is fine in Coach chat replies, which render inline math.)
 
 ### Always double backslashes in JSON
 
@@ -207,8 +206,8 @@ Cards are shipped as JSON and parsed with `JSON.parse`. A single `\` starts a JS
 
 ```json
 {
-  "question": "样本标准差 $s$ 的公式是什么？",
-  "answer": "$s = \\sqrt{\\frac{1}{N-1}\\sum_{i=1}^{N}(r_i-\\bar{r})^2}$"
+  "question": "样本标准差 $$s$$ 的公式是什么？",
+  "answer": "$$s = \\sqrt{\\frac{1}{N-1}\\sum_{i=1}^{N}(r_i-\\bar{r})^2}$$"
 }
 ```
 
@@ -309,14 +308,14 @@ Also never write ordinal-index cards like "What is the 1st component of FSRS?" /
   "source": "/notes/stats-sd.md",
   "cards": [
     {
-      "question": "样本标准差 $s$ 的公式是什么？",
-      "answer": "$s = \\sqrt{\\frac{1}{N-1}\\sum_{i=1}^{N}(r_i-\\bar{r})^2}$",
+      "question": "样本标准差 $$s$$ 的公式是什么？",
+      "answer": "$$s = \\sqrt{\\frac{1}{N-1}\\sum_{i=1}^{N}(r_i-\\bar{r})^2}$$",
       "tags": ["type:concept", "statistics", "alias:样本标准差", "alias:sample standard deviation"],
       "category": "概率论",
       "source_quote": "样本标准差用无偏估计，分母为 N-1。"
     },
     {
-      "question": "样本方差公式的分母使用 {{c1::N-1}} 而不是 $N$，是为了得到无偏估计。",
+      "question": "样本方差公式的分母使用 {{c1::N-1}} 而不是 $$N$$，是为了得到无偏估计。",
       "answer": "N-1",
       "tags": ["statistics", "unbiased"],
       "category": "概率论",
