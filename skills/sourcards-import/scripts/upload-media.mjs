@@ -32,7 +32,7 @@ import {
   isPublicHttpsMediaSrc,
   needsMediaUpload,
   rewritePayloadMedia,
-} from '../../../lib/card-media-md.mjs';
+} from '../lib/card-media-md.mjs';
 import { putGithubMedia } from './media-put-github.mjs';
 
 // ---- env bootstrap (skill / agent perception of CDN config) ------------------

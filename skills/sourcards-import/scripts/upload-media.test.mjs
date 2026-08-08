@@ -23,7 +23,7 @@ import {
   needsMediaUpload,
   rewriteMediaSrc,
   rewritePayloadMedia,
-} from '../../../lib/card-media-md.mjs';
+} from '../lib/card-media-md.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const UPLOAD = join(__dirname, 'upload-media.mjs');

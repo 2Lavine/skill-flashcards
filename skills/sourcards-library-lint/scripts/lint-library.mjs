@@ -7,7 +7,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { lintLibraryOrganization } from '../../../lib/org-lint.mjs';
+import { lintLibraryOrganization } from '../lib/org-lint.mjs';
 
 function usage(code = 1) {
   console.error(`Usage:

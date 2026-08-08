@@ -27,11 +27,11 @@ import { readFileSync } from 'node:fs';
 import {
   findNearCatalogNames,
   normalizeCatalogName,
-} from '../../../lib/catalog-name.mjs';
+} from '../lib/catalog-name.mjs';
 import {
   classifyMediaSrc,
   extractMediaSrcs,
-} from '../../../lib/card-media-md.mjs';
+} from '../lib/card-media-md.mjs';
 
 const errors = [];   // blocking — import would fail or data would be corrupt
 const warnings = []; // quality drift — import still succeeds
@@ -291,6 +291,7 @@ process.exit(errors.length ? 1 : 0);
 
 // Catalog name matching SSOT: packages/platform/skill-flashcards/lib/catalog-name.mjs
 // (mirrors monorepo @sourcards/shared catalog-name).
+// Copy-installed skills import ../lib/* (mirrored here; pnpm skill:check guards drift).
 function norm(s) {
   return normalizeCatalogName(s);
 }

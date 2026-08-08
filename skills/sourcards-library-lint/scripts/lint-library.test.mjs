@@ -4,7 +4,7 @@ import {
   lintLibraryOrganization,
   nameSimilarity,
   normalizeName,
-} from '../../../lib/org-lint.mjs';
+} from '../lib/org-lint.mjs';
 
 test('normalizeName collapses punctuation/case', () => {
   assert.equal(normalizeName('  心理-学  '), '心理学');
