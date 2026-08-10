@@ -20,6 +20,7 @@ Do **not** reload everything every time. Open only what the current step needs:
 | [references/disciplines.md](references/disciplines.md) | Assigning `deck` / `category` |
 | [references/quality-rules.md](references/quality-rules.md) | Unsure whether a fact deserves a card, or how to split/word it |
 | [references/api.md](references/api.md) | Personal Integration Token scopes; import, catalog, list batches, or roll back |
+| [../../examples/cards.json](../../examples/cards.json) | Want a complete worked template: note → Form A/B → tags → `$$` math, all lint-clean |
 
 ## Hard constraints
 
