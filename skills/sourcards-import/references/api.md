@@ -5,7 +5,7 @@
 Import, media, catalog, and batch recovery all use a **Personal Integration Token**
 (prefix `sc_int_…`). This is **not** a login session and is **not** a general API key.
 
-Default permissions on every new token (exactly five):
+Default permissions on every new token (exactly six):
 
 ```text
 imports:create
@@ -13,6 +13,7 @@ imports:read
 imports:rollback
 media:upload
 catalog:read
+stats:read
 ```
 
 ### Approved routes only
@@ -25,16 +26,22 @@ catalog:read
 | `GET` | `/api/categories` | `catalog:read` |
 | `GET` | `/api/imports` | `imports:read` |
 | `POST` | `/api/imports/:id/rollback` | `imports:rollback` |
+| `GET` | `/api/stats` | `stats:read` |
+| `GET` | `/api/daily-counts` | `stats:read` |
+| `GET` | `/api/streak` | `stats:read` |
 
 Every route verifies **exactly** that permission and derives the owner from the
-token `referenceId`. All reads and mutations are **owner-scoped**.
+token `referenceId`. All reads and mutations are **owner-scoped**. The `stats:*`
+routes return only the owner's aggregate review statistics — see the
+`sourcards-daily-report` skill for fetching them as a daily report.
 
 ### What the token cannot do
 
 Tokens never create authenticated sessions and **cannot** access:
 
 - card bodies (beyond what the import payload itself contains)
-- reviews / FSRS state
+- reviews / FSRS state (raw review logs are not exposed to tokens; aggregate
+  `/api/stats` etc. above are)
 - Coach data or LLM generation
 - settings, billing, account, or admin surfaces
 - any route outside the table above

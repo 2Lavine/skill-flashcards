@@ -6,6 +6,7 @@
 - 插件名：**`skill-flashcards`**；npm 包（可选）：**`@sourcards/skill-flashcards`**
 - 主技能：**`sourcards-import`**（原 `sourcards-flashcards`）
 - 辅助技能：**`sourcards-library-lint`**
+- 报表技能：**`sourcards-daily-report`**
 
 ## 能帮你做什么
 
@@ -17,9 +18,12 @@
 | 回滚导错的批次 | `sourcards-import` → `POST /api/imports/:id/rollback` | Personal Integration Token |
 | 本地图片/音频 → 线上 `https` 媒体 | `sourcards-import` → `upload-media` | token 或 GitHub BYO |
 | 整理已有牌库（重名/空组/未分类漂移） | `sourcards-library-lint` → `lint-library` | 完整牌库快照（导出） |
+| 拉取每日复习统计/生成报表（含 cron 定时） | `sourcards-daily-report` → `fetch-daily-report` | Personal Integration Token（`stats:read`） |
 
 能力边界（**令牌做不到的**）：不创建登录会话；不能访问卡片正文（导入 payload 之外）、
-复习/FSRS 状态、Coach 或 LLM、设置/计费/账户、以及本表之外任何路由。
+原始复习日志（raw review logs）、Coach 或 LLM、设置/计费/账户、以及本表之外任何路由。
+令牌可以读取**聚合复习统计**（`/api/stats`、`/api/daily-counts`、`/api/streak`，`stats:read`），
+按会员等级每日配额计量（Free 100 次/天，Lite/Lifetime 5000 次/天）。
 
 ## 30 秒跑通一个导入
 
