@@ -18,6 +18,7 @@ Do **not** reload everything every time. Open only what the current step needs:
 
 | File | Read when |
 |------|-----------|
+| [USAGE.md](USAGE.md) | Human-facing usage: prerequisites, flags, quota, cron scheduling example |
 | [references/api.md](references/api.md) | Token scopes, endpoint shapes, quota headers, 429/401 handling |
 | [scripts/fetch-daily-report.mjs](scripts/fetch-daily-report.mjs) | Flag reference / exit codes before invoking the script |
 

@@ -82,6 +82,20 @@ Personal Integration Token（前缀 `sc_int_…`）新令牌默认恰好五个�
 CLI 只接受完整牌库快照（`catalog:read` 端点不含所需计数，不能重建快照），
 见 [SKILL.md](skills/sourcards-library-lint/SKILL.md)。
 
+### `sourcards-daily-report` — 拉取每日复习报表
+
+用 Personal Integration Token（`stats:read`）拉取复习统计，生成 Markdown 或
+JSON。完整手册（前置条件、参数、配额、**cron 定时示例**）见
+[USAGE.md](skills/sourcards-daily-report/USAGE.md)，快捷用法：
+
+```bash
+# Markdown 报表（默认最近 7 天）
+node skills/sourcards-daily-report/scripts/fetch-daily-report.mjs
+
+# 原始 JSON（cron / agent 管道用）
+node skills/sourcards-daily-report/scripts/fetch-daily-report.mjs --days 30 --json
+```
+
 ## 本地工具
 
 ```bash
