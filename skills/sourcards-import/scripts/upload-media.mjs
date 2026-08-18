@@ -5,12 +5,17 @@
  *
  * Usage:
  *   node upload-media.mjs cards.json --out cards.media.json
+ *   node upload-media.mjs cards.json --config media.config.json --out out.json
  *   node upload-media.mjs cards.json --provider map --map media-map.json --out out.json
  *   node upload-media.mjs cards.json --dry-run
  *   cat cards.json | node upload-media.mjs --out -
  *
- * Providers: s3 (R2/S3 SigV4), http (POST multipart), map (JSON rewrite only),
- *            command (shell $FILE $KEY $CONTENT_TYPE).
+ * Providers: s3 (R2/S3 SigV4), http (POST multipart to YOUR gateway), map (JSON
+ *            rewrite only), command (shell $FILE $KEY $CONTENT_TYPE).
+ *
+ * The http provider is user-configurable — it never hard-codes an upload URL.
+ * Configure your own image host via `--config <file>` (see media.config.example.json)
+ * or SOURCARDS_MEDIA_UPLOAD_URL.
  *
  * Exit: 0 success, 1 upload/IO/unresolved local media, 2 bad usage.
  */
@@ -40,9 +45,10 @@ import { putGithubMedia } from './media-put-github.mjs';
 // upload-media does NOT invent a CDN — it only reads SOURCARDS_MEDIA_*.
 // Discovery order:
 //   1. process.env already set (shell export, Claude Code session, CI)
-//   2. auto-load monorepo `.env.local` then `.env` (missing keys only)
-//   3. --provider flag overrides provider choice for one run
-// Secrets stay in gitignored .env.local — never committed into the skill pack.
+//   2. --config <file> (or $SOURCARDS_MEDIA_CONFIG), then auto-discovered media.config.json
+//   3. auto-load monorepo `.env.local` then `.env` (missing keys only)
+//   4. --provider flag overrides provider choice for one run
+// Secrets stay in gitignored media.config.json / .env.local — never committed.
 
 /**
  * Minimal dotenv. Does not override keys already present in process.env.
@@ -123,6 +129,61 @@ function bootstrapMediaEnv() {
 
 const envLoadedFrom = bootstrapMediaEnv();
 
+// ---- media.config.json (user-owned upload config) ----------------------------
+
+/**
+ * User-owned upload config. Shape (see media.config.example.json):
+ *   { "provider": "http", "http": { "uploadUrl", "token", "baseUrl" } }
+ * Resolution: --config flag > $SOURCARDS_MEDIA_CONFIG > auto-discovered
+ * `media.config.json` (script dir → cwd walk-up). Never required when
+ * SOURCARDS_MEDIA_* env vars are set directly.
+ */
+function discoverConfigPath(flagValue) {
+  if (flagValue) return flagValue;
+  if (process.env.SOURCARDS_MEDIA_CONFIG) return process.env.SOURCARDS_MEDIA_CONFIG;
+  const here = dirname(fileURLToPath(import.meta.url));
+  const names = ['media.config.json'];
+  for (const start of [here, process.cwd()]) {
+    const found = walkUpFind(start, names);
+    if (found) return found;
+  }
+  return null;
+}
+
+function loadMediaConfig(path) {
+  if (!path || !existsSync(path)) return null;
+  let obj;
+  try {
+    obj = JSON.parse(readFileSync(path, 'utf8'));
+  } catch (e) {
+    throw new Error(`Cannot parse media config ${path}: ${e.message}`);
+  }
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+    throw new Error(`media config ${path} must be a JSON object`);
+  }
+  return obj;
+}
+
+/** Apply config values into env (fills missing keys only — flags/env win). */
+function applyConfigToEnv(config) {
+  const set = [];
+  const put = (key, value) => {
+    if (value === undefined || value === null || value === '') return;
+    if (!Object.prototype.hasOwnProperty.call(process.env, key)) {
+      process.env[key] = String(value);
+      set.push(key);
+    }
+  };
+  if (config.provider) put('SOURCARDS_MEDIA_PROVIDER', config.provider);
+  const http = config.http;
+  if (http) {
+    put('SOURCARDS_MEDIA_UPLOAD_URL', http.uploadUrl);
+    put('SOURCARDS_MEDIA_UPLOAD_TOKEN', http.token);
+    put('SOURCARDS_MEDIA_HTTP_BASE_URL', http.baseUrl);
+  }
+  return set;
+}
+
 // ---- args --------------------------------------------------------------------
 
 const argv = process.argv.slice(2);
@@ -130,6 +191,7 @@ let inputFile = null;
 let outFile = null;
 let provider = null;
 let mapFile = null;
+let configFlag = null;
 let rootOpt = null; // null | path | 'auto'
 let dryRun = false;
 let jsonOut = false;
@@ -140,6 +202,8 @@ for (let i = 0; i < argv.length; i++) {
   else if (a.startsWith('--out=')) outFile = a.slice('--out='.length);
   else if (a === '--provider') provider = argv[++i];
   else if (a.startsWith('--provider=')) provider = a.slice('--provider='.length);
+  else if (a === '--config') configFlag = argv[++i];
+  else if (a.startsWith('--config=')) configFlag = a.slice('--config='.length);
   else if (a === '--map') mapFile = argv[++i];
   else if (a.startsWith('--map=')) mapFile = a.slice('--map='.length);
   else if (a === '--root') rootOpt = argv[++i];
@@ -157,6 +221,11 @@ for (let i = 0; i < argv.length; i++) {
   }
 }
 
+// User-owned upload config → env (fills missing keys; --provider flag still wins).
+const configPath = discoverConfigPath(configFlag);
+const mediaConfig = configPath ? loadMediaConfig(configPath) : null;
+const configEnvSet = mediaConfig ? applyConfigToEnv(mediaConfig) : [];
+
 function printHelp() {
   console.log(`Usage: upload-media.mjs [cards.json] [options]
 
@@ -164,11 +233,13 @@ Rewrite local media paths in card markdown to absolute HTTPS via a BYO CDN.
 
 How the skill "sees" your CDN (no magic server config):
   1. process.env.SOURCARDS_MEDIA_*  (export / Claude session / CI)
-  2. auto-load monorepo .env.local / .env (fills missing keys only)
-  3. --provider flag for one-shot override
+  2. --config <file> (or $SOURCARDS_MEDIA_CONFIG / auto-discovered media.config.json)
+  3. auto-load monorepo .env.local / .env (fills missing keys only)
+  4. --provider flag for one-shot override
 
 Options:
   --out <file|->     Write rewritten JSON (default: stdout if dry-run else required)
+  --config <file>    User-owned upload config JSON (see media.config.example.json)
   --provider <name>  github | s3 | http | map | command  (or $SOURCARDS_MEDIA_PROVIDER)
   --map <file>       JSON map { "local/path": "https://..." } (map provider / override)
   --root <dir|auto>  Resolve relative paths (default: cwd; auto = cards.json dir)
@@ -178,7 +249,7 @@ Options:
 Providers (keep both configured; switch with PROVIDER / --provider):
   s3      R2/S3 SigV4 (SOURCARDS_MEDIA_S3_* + _S3_BASE_URL)
   github  public git repo + jsDelivr (REPO_DIR + _GITHUB_BASE_URL)
-  http    POST multipart to your gateway
+  http    POST multipart to YOUR gateway (SOURCARDS_MEDIA_UPLOAD_URL / config)
   map     rewrite only from --map file
   command shell $FILE $KEY via SOURCARDS_MEDIA_UPLOAD_CMD
 
@@ -317,13 +388,13 @@ function detectProvider() {
   if (process.env.SOURCARDS_MEDIA_PROVIDER) {
     return process.env.SOURCARDS_MEDIA_PROVIDER.toLowerCase();
   }
-  // Default: same key as import (FLASHCARD_API_KEY) → official POST /api/media.
-  // URL defaults to production if SOURCARDS_MEDIA_UPLOAD_URL unset.
-  const hasKey =
-    process.env.FLASHCARD_API_KEY ||
+  // Default: http only when an upload endpoint is explicitly configured
+  // (no hard-coded official URL — users host their own images/audio).
+  const hasHttpConfig =
+    process.env.SOURCARDS_MEDIA_UPLOAD_URL ||
     process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN;
-  if (hasKey) return 'http';
-  // BYO fallbacks only when no project API key
+  if (hasHttpConfig) return 'http';
+  // BYO fallbacks only when no configured http endpoint
   if (process.env.SOURCARDS_MEDIA_REPO_DIR) return 'github';
   if (
     process.env.SOURCARDS_MEDIA_S3_ENDPOINT &&
@@ -394,15 +465,15 @@ async function uploadMap(src, _localPath, _body, _contentType, _key) {
 }
 
 async function uploadHttp(src, localPath, body, contentType, key) {
-  const url =
-    process.env.SOURCARDS_MEDIA_UPLOAD_URL ||
-    process.env.SOURCARDS_MEDIA_OFFICIAL_URL ||
-    'https://sourcard.sourmonkey.xyz/api/media';
-  // Official API uses better-auth API keys (x-api-key). Bearer still supported for custom gateways.
-  const token =
-    process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN ||
-    process.env.FLASHCARD_API_KEY ||
-    '';
+  const url = process.env.SOURCARDS_MEDIA_UPLOAD_URL;
+  if (!url) {
+    throw new Error(
+      'http provider requires an upload endpoint: set SOURCARDS_MEDIA_UPLOAD_URL ' +
+        'or provide a media.config.json (see media.config.example.json). ' +
+        'No official upload URL is hard-coded — bring your own image host.',
+    );
+  }
+  const token = process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN || '';
   const baseUrl = process.env.SOURCARDS_MEDIA_BASE_URL || '';
 
   // multipart form: file + key + contentType
@@ -442,12 +513,12 @@ async function uploadHttp(src, localPath, body, contentType, key) {
       (data?.error === 'media_upload_required' || data?.error === 'pro_required' || data?.error === 'entitlement_required')
     ) {
       throw new Error(
-        `官方媒体上传需要 media:upload 权益（Lite/Lifetime 或显式授权；403）。Free 请改用 GitHub：--provider github（需 SOURCARDS_MEDIA_REPO_DIR）。详情: ${data?.message || data?.error || text.slice(0, 120)}`,
+        `上传网关拒绝 (403)：你的上传端点未授予当前账号媒体上传权限。请确认你的图床账号权限，或改用自备图床：--provider github（需 SOURCARDS_MEDIA_REPO_DIR）。详情: ${data?.message || data?.error || text.slice(0, 120)}`,
       );
     }
     if (res.status === 401) {
       throw new Error(
-        `媒体上传未授权 (401)。设置 FLASHCARD_API_KEY 或 SOURCARDS_MEDIA_UPLOAD_TOKEN。`,
+        `媒体上传未授权 (401)。设置 SOURCARDS_MEDIA_UPLOAD_TOKEN。`,
       );
     }
     throw new Error(`http upload ${res.status}: ${text.slice(0, 200)}`);
@@ -647,6 +718,9 @@ if (providerName) applyProviderBaseUrl(providerName);
 if (toUpload.length > 0 && !jsonOut && envLoadedFrom.length) {
   console.error(`env: loaded ${envLoadedFrom.join('; ')}`);
 }
+if (toUpload.length > 0 && !jsonOut && configPath && mediaConfig) {
+  console.error(`config: ${configPath} (+${configEnvSet.length} SOURCARDS_MEDIA_*)`);
+}
 if (toUpload.length > 0 && !jsonOut && providerName) {
   console.error(`provider: ${providerName}`);
 }
@@ -660,7 +734,8 @@ if (toUpload.length === 0) {
   if (!providerName && !dryRun) {
     console.error(
       `Found ${toUpload.length} local media src(s) but no provider configured.\n` +
-        `Set SOURCARDS_MEDIA_PROVIDER (github|s3|http|map|command) and related env, or pass --provider map --map file.json.\n` +
+        `Bring your own image host: set SOURCARDS_MEDIA_PROVIDER (github|s3|http|map|command) and related env, ` +
+        `pass --provider map --map file.json, or provide media.config.json (see media.config.example.json).\n` +
         `See references/media.md.`,
     );
     for (const s of toUpload) console.error(`  - ${s}`);

@@ -1,0 +1,9 @@
+{
+  "$comment": "Copy to media.config.json (gitignored) and fill in YOUR OWN image host. upload-media.mjs reads this via --config <path> (or SOURCARDS_MEDIA_CONFIG).",
+  "provider": "http",
+  "http": {
+    "uploadUrl": "https://your-gateway.example.com/api/media",
+    "token": "your-secret-token",
+    "baseUrl": "https://cdn.example.com"
+  }
+}

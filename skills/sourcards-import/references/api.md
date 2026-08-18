@@ -82,26 +82,27 @@ x-api-key: $FLASHCARD_API_KEY
 Import is **JSON only** — no multipart/binary media. Embed images and audio as
 absolute `https://` URLs inside each card's `question` / `answer` markdown.
 
-### Official media upload — skill default
+### Media upload — bring your own gateway
 
-Same token as import. Requires token permission `media:upload` **and** the
-owner's effective entitlement `media:upload` (Lite / Lifetime membership defaults,
-or an explicit grant). Free accounts without that entitlement get
-`403` and should use GitHub BYO (`upload-media --provider github`).
+The `upload-media` skill uploads to **your configured endpoint** (no hard-coded
+official URL). The platform's own `/api/media` is maintainer-only and not
+available to regular users — host media on your own CDN instead.
+
+Configure the `http` provider via `media.config.json` (see
+[media.md](media.md) → `media.config.json` section) or
+`SOURCARDS_MEDIA_UPLOAD_URL` / `SOURCARDS_MEDIA_UPLOAD_TOKEN`.
 
 ```
-POST https://sourcard.sourmonkey.xyz/api/media
+POST {your-configured-upload-url}
 Content-Type: multipart/form-data
-x-api-key: $FLASHCARD_API_KEY
-# field: file
+x-api-key: $SOURCARDS_MEDIA_UPLOAD_TOKEN
+# field: file, key, contentType
 ```
 
-- Response: `{ "ok": true, "url": "https://…", "key": "users/…", "bytes": N }`.
-- Skill default: when `FLASHCARD_API_KEY` is set, `upload-media` uses this
-  endpoint automatically (no extra media token).
-- Server still enforces daily upload count, daily bytes, and total hosted-bytes
-  quotas from effective entitlements.
-- Free / no media entitlement: GitHub BYO — see [media.md](media.md).
+- Response: `{ "ok": true, "url": "https://…" }` (or the script builds the URL
+  from `SOURCARDS_MEDIA_HTTP_BASE_URL`).
+- Default auto-detect: `http` when an upload URL/token is configured; otherwise
+  `github` / `s3` BYO — see [media.md](media.md).
 
 ## Request Body
 

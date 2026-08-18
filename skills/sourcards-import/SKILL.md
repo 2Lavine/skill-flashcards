@@ -124,7 +124,7 @@ Relax **only** when the user clearly wants short-term / exam coverage (`考试`,
 9. **Assign discipline & tags** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`.
 10. **Self-validate** — run the checklist below on every card.
 11. **Output JSON** — one valid JSON object (code block or file). Local media paths OK while drafting.
-12. **Resolve media** — if any card embeds local/relative image or audio, run `upload-media` (default: official `/api/media` with Personal Integration Token `$FLASHCARD_API_KEY`; needs owner `media:upload` entitlement) so every `src` is absolute `https://` before lint. See [media.md](references/media.md).
+12. **Resolve media** — if any card embeds local/relative image or audio, run `upload-media` with your **own image host** configured (default: `http` provider posting to the `SOURCARDS_MEDIA_UPLOAD_URL` from `media.config.json` / env) so every `src` is absolute `https://` before lint. See [media.md](references/media.md).
 13. **Lint, then import** — fix blocking lint errors before POST. On bad import, roll back and re-import.
 
 ## Quality checklist
@@ -162,13 +162,15 @@ SKILL_ROOT="skills/sourcards-import"   # inside this plugin repo
 # sourcards-lint-cards cards.json
 # sourcards-upload-media cards.json --out cards.json
 
-# local/relative media → absolute https via official upload (default)
-# Uses the SAME Personal Integration Token as import: $FLASHCARD_API_KEY
-#   (env var first; else Settings → Integrations → Personal Integration Tokens)
-# POST https://sourcard.sourmonkey.xyz/api/media
-#   token permission media:upload + owner entitlement media:upload (Lite/Lifetime)
-# Free / no media entitlement: --provider github  (see media.md)
+# local/relative media → absolute https via YOUR image host
+# Configure your own upload endpoint first (see references/media.md):
+#   1. copy media.config.example.json → media.config.json and fill in your gateway
+#   2. or export SOURCARDS_MEDIA_UPLOAD_URL / SOURCARDS_MEDIA_UPLOAD_TOKEN
+# No official upload URL is hard-coded — bring your own image host.
 node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
+
+# BYO git repo + jsDelivr (no upload endpoint needed):
+# node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --provider github --out cards.json
 
 # format lint only
 node "$SKILL_ROOT/scripts/lint-cards.mjs" cards.json
@@ -185,7 +187,9 @@ node "$SKILL_ROOT/scripts/lint-cards.mjs" cards.json \
 Import, catalog, list batches, and rollback: [references/api.md](references/api.md).
 Token scopes are fixed to five permissions (`imports:create|read|rollback`,
 `media:upload`, `catalog:read`) — no card bodies, reviews, Coach, settings,
-billing, or account APIs.
+billing, or account APIs. Note: `media:upload` on your token only opens the
+**configured** upload endpoint you point `upload-media` at (see media.md); the
+platform's own `/api/media` is not available to regular users.
 
 **Bad-import recovery**
 

@@ -257,7 +257,7 @@ test('local media without provider → exit 1', () => {
         SOURCARDS_MEDIA_UPLOAD_URL: '',
         SOURCARDS_MEDIA_UPLOAD_CMD: '',
         SOURCARDS_MEDIA_UPLOAD_TOKEN: '',
-        // Official path defaults when this is set — blank for "no provider" case.
+        // No upload endpoint configured — expect "no provider configured".
         FLASHCARD_API_KEY: '',
       },
     });
@@ -346,6 +346,84 @@ test('http provider posts multipart and rewrites from response url', async () =>
   } finally {
     for (const s of sockets) s.destroy();
     await new Promise((r) => server.close(r));
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('config file supplies http endpoint (no env needed)', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'sc-media-'));
+  const sockets = new Set();
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'application/json');
+    res.end(JSON.stringify({ url: 'https://cdn.example/uploaded/x.mp3' }));
+  });
+  server.on('connection', (s) => {
+    sockets.add(s);
+    s.on('close', () => sockets.delete(s));
+  });
+  await new Promise((r) => server.listen(0, r));
+  const port = server.address().port;
+  try {
+    writeFileSync(join(dir, 'x.mp3'), Buffer.from('ID3data'));
+    const cardsPath = join(dir, 'cards.json');
+    const configPath = join(dir, 'media.config.json');
+    const outPath = join(dir, 'out.json');
+    writeFileSync(
+      cardsPath,
+      JSON.stringify({
+        deck: 'Test',
+        cards: [{ question: '<audio src="./x.mp3" controls></audio>', answer: 'a' }],
+      }),
+    );
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        provider: 'http',
+        http: {
+          uploadUrl: `http://127.0.0.1:${port}/upload`,
+          token: 'cfg-token',
+          baseUrl: 'https://cdn.example',
+        },
+      }),
+    );
+    const { code, err } = await runAsync(
+      [cardsPath, '--config', configPath, '--out', outPath, '--root', dir],
+      // No explicit UPLOAD_URL env — the config file must supply it.
+      {},
+    );
+    assert.equal(code, 0, err);
+    const out = JSON.parse(readFileSync(outPath, 'utf8'));
+    assert.equal(
+      out.cards[0].question,
+      '<audio src="https://cdn.example/uploaded/x.mp3" controls></audio>',
+    );
+  } finally {
+    for (const s of sockets) s.destroy();
+    await new Promise((r) => server.close(r));
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('http without configured endpoint → exit 1 (no hard-coded URL)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'sc-media-'));
+  try {
+    writeFileSync(join(dir, 'x.mp3'), 'x');
+    const { code, combined } = run(
+      ['--provider', 'http', '--root', dir],
+      {
+        input: {
+          deck: 'Test',
+          cards: [{ question: '<audio src="./x.mp3" controls></audio>', answer: 'a' }],
+        },
+        env: {
+          SOURCARDS_MEDIA_UPLOAD_URL: '',
+          SOURCARDS_MEDIA_UPLOAD_TOKEN: '',
+        },
+      },
+    );
+    assert.equal(code, 1);
+    assert.match(combined, /requires an upload endpoint/);
+  } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 });

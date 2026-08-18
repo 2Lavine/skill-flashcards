@@ -3,3 +3,5 @@ node_modules/
 *.log
 .npm/
 dist/
+# Local media-upload config (user-owned; keep secrets out of the repo).
+media.config.json

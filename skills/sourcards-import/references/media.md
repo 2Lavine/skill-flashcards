@@ -20,21 +20,24 @@ Relative, `file://`, and bare disk paths will not load in the web/desktop/mobile
 
 Root-relative paths like `/demo/media/sample-a.mp3` are **SPA demo assets only** — not a model for user content.
 
-## Agent workflow (default = official upload)
+## Agent workflow (default = your own image host)
 
-**Auth is the same Personal Integration Token as import:** `FLASHCARD_API_KEY`
-(prefix `sc_int_…`) in the environment. Check `echo "$FLASHCARD_API_KEY"` first;
-if missing, user creates one in the app:
-**Settings → Integrations → Personal Integration Tokens** (see [api.md](api.md)).
+The `http` provider posts to **your** configured upload endpoint — no official
+upload URL is hard-coded. Configure it one of three ways:
 
-Official upload also needs the owner's effective entitlement `media:upload`
-(Lite / Lifetime defaults, or an explicit grant) and remaining media quotas.
+1. **Config file (recommended):** copy `media.config.example.json` → `media.config.json`
+   (gitignored), fill in your gateway, and pass `--config media.config.json`
+   (or `$SOURCARDS_MEDIA_CONFIG`, or let the script auto-discover `media.config.json`
+   from the script dir / cwd).
+2. **Env vars:** `SOURCARDS_MEDIA_UPLOAD_URL` (+ optional `SOURCARDS_MEDIA_UPLOAD_TOKEN`,
+   `SOURCARDS_MEDIA_HTTP_BASE_URL`).
+3. **BYO repo / bucket without any upload endpoint:** `--provider github` (public repo
+   + jsDelivr) or `--provider s3`.
 
 ```text
 1. Formulate cards.json  (may embed ./local media paths)
-2. node scripts/upload-media.mjs cards.json --out cards.json
-   → default: POST /api/media with x-api-key: $FLASHCARD_API_KEY
-     (permission media:upload + entitlement media:upload)
+2. node scripts/upload-media.mjs cards.json --config media.config.json --out cards.json
+   → posts to YOUR uploadUrl with YOUR token
 3. node scripts/lint-cards.mjs cards.json [--catalog …]  (catalog:read)
 4. POST /api/import with the same x-api-key  (imports:create; see api.md)
 ```
@@ -42,9 +45,13 @@ Official upload also needs the owner's effective entitlement `media:upload`
 ```bash
 SKILL_ROOT="skills/sourcards-import"   # or package install path
 
-# Requires FLASHCARD_API_KEY (Personal Integration Token) + media:upload entitlement
-node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
-# or: sourcards-upload-media cards.json --out cards.json
+# http → your configured endpoint
+node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json \
+  --config media.config.json --out cards.json
+# or: sourcards-upload-media cards.json --config media.config.json --out cards.json
+
+# GitHub BYO (no upload endpoint needed):
+# node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --provider github --out cards.json
 ```
 
 ### Map-only (already hosted)
@@ -61,35 +68,49 @@ node scripts/upload-media.mjs cards.json \
 
 | Path | Who | Skill |
 |------|-----|--------|
-| **Official** `POST /api/media` | Owner has effective `media:upload` (Lite / Lifetime defaults or explicit grant) | **Default** when `FLASHCARD_API_KEY` is set |
+| **Your own gateway** (configured `http` endpoint) | Anyone with an upload endpoint | **Default** when `SOURCARDS_MEDIA_UPLOAD_URL` / config is set |
 | **GitHub BYO** public repo + jsDelivr | Any membership (incl. Free) | `--provider github` |
+| **S3/R2** | Personal bucket | `--provider s3` |
 
-Official store is SourCards R2. Schema unchanged — only URLs in markdown.
-Token permission `media:upload` alone is not enough — the server also checks
-the owner's entitlement and daily/total media quotas.
+The platform's own `/api/media` is a **maintainer-only** endpoint (not available
+to regular users) — regular imports host media on their own CDN. Schema stays
+unchanged: only URLs in markdown.
 
 ## Providers
 
 | Provider | When | Needs |
 |----------|------|--------|
-| **`http`** (default) | Official media API | **`FLASHCARD_API_KEY`** (Personal Integration Token, same as import). Optional `SOURCARDS_MEDIA_UPLOAD_URL` (default `https://sourcard.sourmonkey.xyz/api/media`) |
+| **`http`** (default) | Your own upload gateway | `SOURCARDS_MEDIA_UPLOAD_URL` (via env or `media.config.json`) |
 | **`github`** | Free / BYO | `SOURCARDS_MEDIA_REPO_DIR` + `SOURCARDS_MEDIA_GITHUB_BASE_URL` |
 | **`s3`** | Personal R2/S3 (power user) | `SOURCARDS_MEDIA_S3_*` |
 | `map` / `command` | Escape hatches | see below |
 
-### How the skill finds the Personal Integration Token
+### media.config.json (user-owned)
 
-Same rules as import / catalog lint:
+`upload-media` accepts a config file for your own gateway. Template:
+[`media.config.example.json`](../../media.config.example.json) — copy to
+`media.config.json` (gitignored) and fill in.
 
-1. **`process.env.FLASHCARD_API_KEY`** (shell export, Claude session, monorepo `.env` / `.env.local` auto-load) — prefix `sc_int_…`
-2. If missing → ask user: **Settings → Integrations → Personal Integration Tokens → Create**, store as `FLASHCARD_API_KEY`
-3. Optional override token: `SOURCARDS_MEDIA_UPLOAD_TOKEN` (rarely needed)
+```json
+{
+  "provider": "http",
+  "http": {
+    "uploadUrl": "https://your-gateway.example.com/api/media",
+    "token": "your-secret-token",
+    "baseUrl": "https://cdn.example.com"
+  }
+}
+```
+
+Resolution order for `--config`: explicit flag > `$SOURCARDS_MEDIA_CONFIG` >
+auto-discovered `media.config.json` (script dir, then cwd walk-up). Values fill
+missing env keys only — explicit env vars and `--provider` always win.
 
 `upload-media` also auto-loads monorepo `.env.local` / `.env` for missing keys (never overrides already-set env).
 
 **Default auto-detect** when `SOURCARDS_MEDIA_PROVIDER` unset:
 
-1. `FLASHCARD_API_KEY` (or upload token) → **`http`** (official)
+1. `SOURCARDS_MEDIA_UPLOAD_URL` (or `SOURCARDS_MEDIA_UPLOAD_TOKEN`) → **`http`**
 2. else `SOURCARDS_MEDIA_REPO_DIR` → `github`
 3. else full personal `S3_*` → `s3`
 4. else `command` if set
@@ -157,16 +178,15 @@ jsDelivr may lag briefly on brand-new paths after push. Object keys include a co
 | `SOURCARDS_MEDIA_S3_SECRET_ACCESS_KEY` | Secret |
 | `SOURCARDS_MEDIA_S3_REGION` | Default `auto` (R2) |
 | **http / command** | |
-| `SOURCARDS_MEDIA_UPLOAD_URL` | http provider POST target |
-| `SOURCARDS_MEDIA_UPLOAD_TOKEN` | Optional Bearer token |
+| `SOURCARDS_MEDIA_UPLOAD_URL` | http provider POST target (your gateway — required for `http`) |
+| `SOURCARDS_MEDIA_UPLOAD_TOKEN` | Optional Bearer token for your gateway |
 | `SOURCARDS_MEDIA_HTTP_BASE_URL` | Public origin if response has no `url` |
 | `SOURCARDS_MEDIA_UPLOAD_CMD` | Shell command for `command` provider |
 | `SOURCARDS_MEDIA_MAX_IMAGE_BYTES` | Default 8 MiB |
 | `SOURCARDS_MEDIA_MAX_AUDIO_BYTES` | Default 20 MiB |
 
-**Official media reuses the Personal Integration Token (`FLASHCARD_API_KEY`)**
-(same as import; requires `media:upload` permission + entitlement). Personal
-S3/GitHub BYO uses their own env vars, not that token.
+**The `http` provider uses your configured upload URL/token** — never a
+hard-coded official endpoint. GitHub/S3 BYO use their own env vars, not that token.
 
 ### Object keys
 
@@ -232,7 +252,7 @@ export SOURCARDS_MEDIA_UPLOAD_CMD='npx wrangler r2 object put sourcards-media/$K
 ## CLI flags
 
 ```text
-upload-media.mjs [cards.json] [--out file|-] [--provider name]
+upload-media.mjs [cards.json] [--out file|-] [--config file] [--provider name]
   [--map file] [--root dir|auto] [--dry-run] [--json]
 ```
 
