@@ -9,10 +9,12 @@
 1. **Personal Integration Token**（`sc_int_…`，默认已含 `stats:read` 权限）：
    在 App 里创建，路径 `Settings → Integrations → Personal Integration Tokens → Create`，
    完整值只在创建时显示一次。
-2. 把 token 放进环境变量（脚本会自动加载仓库根目录的 `.env.local` / `.env`，不覆盖已有环境变量）：
+2. 把 token 放进环境变量，或复制本技能目录的 [`.env.example`](.env.example) 为 `.env` /
+   `.env.local`（个人 overlay，gitignore）。已有环境变量不被文件覆盖：
 
    ```bash
    export FLASHCARD_API_KEY=sc_int_…
+   # 或：cp skills/sourcards-daily-report/.env.example skills/sourcards-daily-report/.env
    ```
 
 3. 自托管 / 本地实例：用 `SOURCARDS_API_BASE_URL` 覆盖默认官方地址
@@ -95,9 +97,9 @@ Token 访问按**会员等级日配额**计量，每次报表 = 3 次请求：
 
 注意：
 
-- **cron 环境很干净**，没有 shell profile，也不会自动加载 `.env.local`——token
-  要么写在 cron 行内，要么用 `source /path/to/.env.local` 先加载，要么把 token
-  放在 cron 能读到的环境里。**不要把 token 明文提交进仓库。**
+- **cron 环境很干净**，没有 shell profile。脚本会从本技能目录的 `.env` /
+  `.env.local` 自动加载缺失的键，所以把 overlay 放在技能文件夹即可；也可以把
+  token 写在 cron 行内。**不要把填好的 `.env` 提交进仓库。**
 - `--out` 用 `$(date ...)` 按天命名，JSON 留档后即可算周均值、streak 变化、
   连续达标天数等趋势（这部分适合后续接 agent 生成报表）。
 - 日志重定向到文件方便排查；脚本退出码：0 成功 / 1 API/IO 失败 / 2 用法错误。

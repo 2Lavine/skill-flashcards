@@ -15,7 +15,7 @@ node skills/sourcards-import/scripts/lint-cards.mjs examples/cards.json
 #   ✓ lint clean — 7 card(s), safe to import.
 
 # 2. Import (needs a Personal Integration Token, see references/api.md)
-export FLASHCARD_API_KEY=sc_int_…            # Settings → Integrations → Personal Integration Tokens
+export FLASHCARD_API_KEY=sc_int_…            # or skill-folder .env (copy .env.example)
 curl -X POST https://sourcard.sourmonkey.xyz/api/import \
   -H "Content-Type: application/json" \
   -H "x-api-key: $FLASHCARD_API_KEY" \

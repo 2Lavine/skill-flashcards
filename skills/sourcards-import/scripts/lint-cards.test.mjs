@@ -19,7 +19,7 @@ function lint(payload, args = [], env = {}) {
   const r = spawnSync('node', [LINT, ...args], {
     input: typeof payload === 'string' ? payload : JSON.stringify(payload),
     encoding: 'utf8',
-    env: { ...process.env, ...env },
+    env: { ...process.env, SOURCARDS_SKIP_ENV_FILE: '1', ...env },
   });
   return { code: r.status, out: r.stdout + r.stderr };
 }
@@ -29,7 +29,9 @@ function lint(payload, args = [], env = {}) {
 // child's fetch, and the two would deadlock. Async spawn keeps the loop free.
 function lintAsync(payload, args = [], env = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn('node', [LINT, ...args], { env: { ...process.env, ...env } });
+    const child = spawn('node', [LINT, ...args], {
+      env: { ...process.env, SOURCARDS_SKIP_ENV_FILE: '1', ...env },
+    });
     let out = '';
     child.stdout.on('data', (d) => { out += d; });
     child.stderr.on('data', (d) => { out += d; });

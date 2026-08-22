@@ -60,16 +60,22 @@ or
 Authorization: Bearer $FLASHCARD_API_KEY
 ```
 
-**Finding the token:** check `FLASHCARD_API_KEY` in the environment first
-(`echo "$FLASHCARD_API_KEY"`). If missing, create one in the app:
+**Finding the token:** `FLASHCARD_API_KEY` is resolved in this order (first
+existing key wins; files never override an already-set env var):
+
+1. Process environment (shell export, Claude session, CI)
+2. This skill folder's `.env.local` then `.env` (personal overlay)
+3. Walk-up `.env.local` / `.env` from the working directory and the script
+
+Copy [`.env.example`](../.env.example) → `.env` in this skill folder. Do not
+commit it, and do not print the value. If still missing, create one in the app:
 
 ```text
 Settings → Integrations → Personal Integration Tokens → Create
 ```
 
-The full value is shown **once** — store it as `FLASHCARD_API_KEY`. Older
-general API keys are not upgraded; revoke them and create a Personal Integration
-Token.
+The full value is shown **once**. Older general API keys are not upgraded;
+revoke them and create a Personal Integration Token.
 
 ## Endpoint
 

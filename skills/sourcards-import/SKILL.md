@@ -185,11 +185,13 @@ node "$SKILL_ROOT/scripts/lint-cards.mjs" cards.json \
 - **Exit 0 clean:** safe to import.
 
 Import, catalog, list batches, and rollback: [references/api.md](references/api.md).
-Token scopes are fixed to five permissions (`imports:create|read|rollback`,
-`media:upload`, `catalog:read`) — no card bodies, reviews, Coach, settings,
-billing, or account APIs. Note: `media:upload` on your token only opens the
-**configured** upload endpoint you point `upload-media` at (see media.md); the
-platform's own `/api/media` is not available to regular users.
+**Token:** `FLASHCARD_API_KEY` from the process environment, else this skill
+folder's `.env.local` / `.env` (copy [`.env.example`](.env.example)). Do not
+print the value. Token scopes are `imports:create|read|rollback`,
+`media:upload`, `catalog:read`, `stats:read` — no card bodies, reviews, Coach,
+settings, billing, or account APIs. Note: `media:upload` on your token only
+opens the **configured** upload endpoint you point `upload-media` at (see
+media.md); the platform's own `/api/media` is not available to regular users.
 
 **Bad-import recovery**
 

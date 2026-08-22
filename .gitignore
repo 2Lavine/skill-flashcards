@@ -3,5 +3,9 @@ node_modules/
 *.log
 .npm/
 dist/
+# Personal overlay (copy from skills/*/.env.example). Never pack a filled file.
+.env
+.env.local
+.env.*.local
 # Local media-upload config (user-owned; keep secrets out of the repo).
 media.config.json

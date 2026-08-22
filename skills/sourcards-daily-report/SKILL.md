@@ -40,8 +40,9 @@ Do **not** reload everything every time. Open only what the current step needs:
 
 ## Workflow
 
-1. **Ensure the token.** `echo "$FLASHCARD_API_KEY"` — if empty, check
-   `.env.local` (auto-loaded) or create a token in the app.
+1. **Ensure the token.** `FLASHCARD_API_KEY` from the process environment, else
+   this skill folder's `.env.local` / `.env` (copy [`.env.example`](.env.example)).
+   If still missing, create one in the app. Do not print the value.
 2. **Fetch.** Default report covers the last 7 days:
 
    ```bash

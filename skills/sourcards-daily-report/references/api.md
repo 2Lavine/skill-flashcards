@@ -59,6 +59,10 @@ X-RateLimit-Remaining: 97
 
 ## Auth headers
 
+`FLASHCARD_API_KEY` comes from the process environment, else this skill
+folder's `.env.local` / `.env` (copy [`.env.example`](../.env.example)).
+Do not print the value.
+
 ```text
 x-api-key: $FLASHCARD_API_KEY
 ```

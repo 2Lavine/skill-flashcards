@@ -106,7 +106,7 @@ Resolution order for `--config`: explicit flag > `$SOURCARDS_MEDIA_CONFIG` >
 auto-discovered `media.config.json` (script dir, then cwd walk-up). Values fill
 missing env keys only — explicit env vars and `--provider` always win.
 
-`upload-media` also auto-loads monorepo `.env.local` / `.env` for missing keys (never overrides already-set env).
+`upload-media` also auto-loads this skill folder's `.env.local` / `.env`, then walk-up files, for missing keys (never overrides already-set env).
 
 **Default auto-detect** when `SOURCARDS_MEDIA_PROVIDER` unset:
 

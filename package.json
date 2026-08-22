@@ -42,7 +42,7 @@
     "sourcards-daily-report": "./skills/sourcards-daily-report/scripts/fetch-daily-report.mjs"
   },
   "scripts": {
-    "test": "node --test skills/sourcards-import/scripts/lint-cards.test.mjs skills/sourcards-import/scripts/upload-media.test.mjs skills/sourcards-library-lint/scripts/lint-library.test.mjs skills/sourcards-daily-report/scripts/fetch-daily-report.test.mjs",
+    "test": "node --test lib/load-env.test.mjs skills/sourcards-import/scripts/lint-cards.test.mjs skills/sourcards-import/scripts/upload-media.test.mjs skills/sourcards-library-lint/scripts/lint-library.test.mjs skills/sourcards-daily-report/scripts/fetch-daily-report.test.mjs",
     "lint-cards": "node skills/sourcards-import/scripts/lint-cards.mjs",
     "upload-media": "node skills/sourcards-import/scripts/upload-media.mjs",
     "lint-library": "node skills/sourcards-library-lint/scripts/lint-library.mjs",

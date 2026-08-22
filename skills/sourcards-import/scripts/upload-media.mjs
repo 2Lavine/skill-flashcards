@@ -39,6 +39,7 @@ import {
   rewritePayloadMedia,
 } from '../lib/card-media-md.mjs';
 import { putGithubMedia } from './media-put-github.mjs';
+import { bootstrapEnv, walkUpFind } from '../lib/load-env.mjs';
 
 // ---- env bootstrap (skill / agent perception of CDN config) ------------------
 //
@@ -46,88 +47,13 @@ import { putGithubMedia } from './media-put-github.mjs';
 // Discovery order:
 //   1. process.env already set (shell export, Claude Code session, CI)
 //   2. --config <file> (or $SOURCARDS_MEDIA_CONFIG), then auto-discovered media.config.json
-//   3. auto-load monorepo `.env.local` then `.env` (missing keys only)
+//   3. skill-folder `.env.local` / `.env`, then walk-up (missing keys only)
 //   4. --provider flag overrides provider choice for one run
 // Secrets stay in gitignored media.config.json / .env.local — never committed.
 
-/**
- * Minimal dotenv. Does not override keys already present in process.env.
- * @returns {{ file: string, set: string[] } | null}
- */
-function loadEnvFile(filePath) {
-  if (!filePath || !existsSync(filePath)) return null;
-  let text;
-  try {
-    text = readFileSync(filePath, 'utf8');
-  } catch {
-    return null;
-  }
-  const set = [];
-  for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('#')) continue;
-    const eq = line.indexOf('=');
-    if (eq <= 0) continue;
-    const key = line.slice(0, eq).trim();
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
-    // Respect keys already present (including empty string = explicit blank in tests).
-    if (Object.prototype.hasOwnProperty.call(process.env, key)) continue;
-    let val = line.slice(eq + 1).trim();
-    if (
-      (val.startsWith('"') && val.endsWith('"')) ||
-      (val.startsWith("'") && val.endsWith("'"))
-    ) {
-      val = val.slice(1, -1);
-    }
-    process.env[key] = val;
-    set.push(key);
-  }
-  return { file: filePath, set };
-}
-
-function walkUpFind(startDir, names) {
-  let dir = resolve(startDir);
-  for (let i = 0; i < 12; i++) {
-    for (const name of names) {
-      const p = join(dir, name);
-      if (existsSync(p)) return p;
-    }
-    const parent = dirname(dir);
-    if (parent === dir) break;
-    dir = parent;
-  }
-  return null;
-}
-
-/** Load monorepo `.env.local` / `.env` if present. */
-function bootstrapMediaEnv() {
-  if (process.env.SOURCARDS_MEDIA_SKIP_ENV_FILE === '1') return [];
-  const here = dirname(fileURLToPath(import.meta.url));
-  const candidates = [];
-  // Prefer monorepo root .env.local (script is under packages/platform/skill-flashcards/...)
-  const monorepoLocal = resolve(here, '../../../../../../.env.local');
-  const monorepoEnv = resolve(here, '../../../../../../.env');
-  for (const p of [monorepoLocal, monorepoEnv]) {
-    if (existsSync(p) && !candidates.includes(p)) candidates.push(p);
-  }
-  const fromCwd = walkUpFind(process.cwd(), ['.env.local', '.env']);
-  const fromScript = walkUpFind(here, ['.env.local', '.env']);
-  for (const p of [fromCwd, fromScript]) {
-    if (p && !candidates.includes(p)) candidates.push(p);
-  }
-
-  const loaded = [];
-  for (const p of candidates) {
-    const r = loadEnvFile(p);
-    if (r && r.set.length) {
-      const n = r.set.filter((k) => k.startsWith('SOURCARDS_MEDIA_')).length;
-      loaded.push(`${p} (+${n} MEDIA_*)`);
-    }
-  }
-  return loaded;
-}
-
-const envLoadedFrom = bootstrapMediaEnv();
+const envLoadedFrom = bootstrapEnv({
+  scriptDir: dirname(fileURLToPath(import.meta.url)),
+});
 
 // ---- media.config.json (user-owned upload config) ----------------------------
 
@@ -234,7 +160,7 @@ Rewrite local media paths in card markdown to absolute HTTPS via a BYO CDN.
 How the skill "sees" your CDN (no magic server config):
   1. process.env.SOURCARDS_MEDIA_*  (export / Claude session / CI)
   2. --config <file> (or $SOURCARDS_MEDIA_CONFIG / auto-discovered media.config.json)
-  3. auto-load monorepo .env.local / .env (fills missing keys only)
+  3. skill-folder .env.local / .env, then walk-up (fills missing keys only)
   4. --provider flag for one-shot override
 
 Options:

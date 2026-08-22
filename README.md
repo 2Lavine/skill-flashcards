@@ -35,7 +35,7 @@
 node skills/sourcards-import/scripts/lint-cards.mjs examples/cards.json
 
 # 3. 导入（需要 Personal Integration Token，见下）
-export FLASHCARD_API_KEY=sc_int_…    # Settings → Integrations → Personal Integration Tokens → Create
+export FLASHCARD_API_KEY=sc_int_…    # or copy skills/sourcards-import/.env.example → .env
 curl -X POST https://sourcard.sourmonkey.xyz/api/import \
   -H "Content-Type: application/json" \
   -H "x-api-key: $FLASHCARD_API_KEY" \

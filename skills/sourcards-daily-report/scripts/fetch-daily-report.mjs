@@ -17,94 +17,14 @@
  * Exit: 0 success, 1 API/IO failure, 2 bad usage.
  */
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { bootstrapEnv } from '../lib/load-env.mjs';
 
-// ---- env bootstrap (skill / agent perception of API config) ------------------
-//
-// Discovery order:
-//   1. process.env already set (shell export, Claude Code session, CI)
-//   2. auto-load monorepo `.env.local` then `.env` (missing keys only)
-// Secrets stay in gitignored .env.local — never committed into the skill pack.
-
-/**
- * Minimal dotenv. Does not override keys already present in process.env.
- * @returns {{ file: string, set: string[] } | null}
- */
-function loadEnvFile(filePath) {
-  if (!filePath || !existsSync(filePath)) return null;
-  let text;
-  try {
-    text = readFileSync(filePath, 'utf8');
-  } catch {
-    return null;
-  }
-  const set = [];
-  for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('#')) continue;
-    const eq = line.indexOf('=');
-    if (eq <= 0) continue;
-    const key = line.slice(0, eq).trim();
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
-    if (Object.prototype.hasOwnProperty.call(process.env, key)) continue;
-    let val = line.slice(eq + 1).trim();
-    if (
-      (val.startsWith('"') && val.endsWith('"')) ||
-      (val.startsWith("'") && val.endsWith("'"))
-    ) {
-      val = val.slice(1, -1);
-    }
-    process.env[key] = val;
-    set.push(key);
-  }
-  return { file: filePath, set };
-}
-
-function walkUpFind(startDir, names) {
-  let dir = resolve(startDir);
-  for (let i = 0; i < 12; i++) {
-    for (const name of names) {
-      const p = join(dir, name);
-      if (existsSync(p)) return p;
-    }
-    const parent = dirname(dir);
-    if (parent === dir) break;
-    dir = parent;
-  }
-  return null;
-}
-
-/** Load monorepo `.env.local` / `.env` if present. */
-function bootstrapEnv() {
-  if (process.env.SOURCARDS_API_SKIP_ENV_FILE === '1') return [];
-  const here = dirname(fileURLToPath(import.meta.url));
-  const candidates = [];
-  // Prefer monorepo root .env.local (script is under packages/platform/skill-flashcards/...)
-  const monorepoLocal = resolve(here, '../../../../../../.env.local');
-  const monorepoEnv = resolve(here, '../../../../../../.env');
-  for (const p of [monorepoLocal, monorepoEnv]) {
-    if (existsSync(p) && !candidates.includes(p)) candidates.push(p);
-  }
-  const fromCwd = walkUpFind(process.cwd(), ['.env.local', '.env']);
-  const fromScript = walkUpFind(here, ['.env.local', '.env']);
-  for (const p of [fromCwd, fromScript]) {
-    if (p && !candidates.includes(p)) candidates.push(p);
-  }
-
-  const loaded = [];
-  for (const p of candidates) {
-    const r = loadEnvFile(p);
-    if (r && r.set.length) {
-      const n = r.set.filter((k) => k.startsWith('SOURCARDS_API_')).length;
-      loaded.push(`${p} (+${n} API_*)`);
-    }
-  }
-  return loaded;
-}
-
-bootstrapEnv();
+// Discovery: process.env first, then this skill folder `.env.local` / `.env`,
+// then walk-up. Files never override already-set keys.
+bootstrapEnv({ scriptDir: dirname(fileURLToPath(import.meta.url)) });
 
 // ---- config ------------------------------------------------------------------
 

@@ -24,6 +24,8 @@
 // Exit codes: 0 = clean or warnings only, 1 = blocking error(s), 2 = bad usage.
 
 import { readFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   findNearCatalogNames,
   normalizeCatalogName,
@@ -32,6 +34,9 @@ import {
   classifyMediaSrc,
   extractMediaSrcs,
 } from '../lib/card-media-md.mjs';
+import { bootstrapEnv } from '../lib/load-env.mjs';
+
+bootstrapEnv({ scriptDir: dirname(fileURLToPath(import.meta.url)) });
 
 const errors = [];   // blocking — import would fail or data would be corrupt
 const warnings = []; // quality drift — import still succeeds
