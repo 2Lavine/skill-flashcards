@@ -161,6 +161,7 @@ SKILL_ROOT="skills/sourcards-import"   # inside this plugin repo
 # Or use the package bin after install:
 # sourcards-lint-cards cards.json
 # sourcards-upload-media cards.json --out cards.json
+# sourcards-save-token --check
 
 # local/relative media → absolute https via YOUR image host
 # Configure your own upload endpoint first (see references/media.md):
@@ -185,13 +186,31 @@ node "$SKILL_ROOT/scripts/lint-cards.mjs" cards.json \
 - **Exit 0 clean:** safe to import.
 
 Import, catalog, list batches, and rollback: [references/api.md](references/api.md).
-**Token:** `FLASHCARD_API_KEY` from the process environment, else this skill
-folder's `.env.local` / `.env` (copy [`.env.example`](.env.example)). Do not
-print the value. Token scopes are `imports:create|read|rollback`,
-`media:upload`, `catalog:read`, `stats:read` — no card bodies, reviews, Coach,
-settings, billing, or account APIs. Note: `media:upload` on your token only
-opens the **configured** upload endpoint you point `upload-media` at (see
-media.md); the platform's own `/api/media` is not available to regular users.
+
+**Token.** Before import / catalog / rollback / official media, ensure a key:
+
+```bash
+node "$SKILL_ROOT/scripts/save-token.mjs" --check
+```
+
+- Exit 0: proceed (process env, else this skill folder's `.env.local` / `.env`).
+- Exit 1: **stop and ask** the user to paste a Personal Integration Token.
+  Where: `Settings → Integrations → Personal Integration Tokens → Create`.
+  Prefix `sc_int_…`; the full value is shown once. Then persist (do not print
+  the value; confirm only that it was saved) and re-run `--check`:
+
+  ```bash
+  printf '%s\n' '<pasted-token>' | node "$SKILL_ROOT/scripts/save-token.mjs"
+  ```
+
+  That upserts `FLASHCARD_API_KEY` in this skill folder's gitignored
+  `.env.local`. Subsequent runs pick it up automatically.
+
+Token scopes are `imports:create|read|rollback`, `media:upload`,
+`catalog:read`, `stats:read` — no card bodies, reviews, Coach, settings,
+billing, or account APIs. Note: `media:upload` on your token only opens the
+**configured** upload endpoint you point `upload-media` at (see media.md); the
+platform's own `/api/media` is not available to regular users.
 
 **Bad-import recovery**
 
@@ -199,7 +218,9 @@ media.md); the platform's own `/api/media` is not available to regular users.
 2. `POST /api/imports/:importId/rollback` (`imports:rollback`) → delete that owner-scoped batch.
 3. Fix payload → lint clean → import again.
 
-If the Personal Integration Token is missing or the API is unreachable, output JSON for manual Import in the app.
+If the user declines a token, or the API is unreachable / still 401 after one
+persisted retry (ask for a fresh token, overwrite `.env.local`, retry once),
+output JSON for manual Import in the app.
 
 ## Question type palette
 

@@ -67,8 +67,12 @@ existing key wins; files never override an already-set env var):
 2. This skill folder's `.env.local` then `.env` (personal overlay)
 3. Walk-up `.env.local` / `.env` from the working directory and the script
 
-Copy [`.env.example`](../.env.example) → `.env` in this skill folder. Do not
-commit it, and do not print the value. If still missing, create one in the app:
+If still missing, the agent asks you to paste a token and writes this skill
+folder's `.env.local` via [`scripts/save-token.mjs`](../scripts/save-token.mjs)
+(gitignored). You can also copy [`.env.example`](../.env.example) → `.env`
+yourself. Do not commit the filled file, and do not print the value.
+
+Create a token in the app:
 
 ```text
 Settings → Integrations → Personal Integration Tokens → Create
@@ -235,5 +239,6 @@ card bodies.
 
 ## Fallback
 
-If no Personal Integration Token is available, or the API is unreachable / returns
-401, output the JSON for manual import via the app's Import button in the browser.
+If the user declines to provide a token, or the API is unreachable / still
+returns 401 after one persisted retry, output the JSON for manual import via
+the app's Import button in the browser.
