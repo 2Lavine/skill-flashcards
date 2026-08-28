@@ -9,10 +9,10 @@ Use when a fact is borderline, wording is bloated, or two concepts interfere.
 
 | Core | Question to ask | Example front |
 |------|-----------------|---------------|
-| **有什么用** | What problem / situation / outcome is this for? | 「止损」主要解决交易中的什么问题？ |
-| **为什么有用** | Why does it matter? Mechanism? What failure does it prevent? | 为什么不移动止损容易把盈利单做成亏损单？ |
-| **怎么用** | When / how to apply? Steps, cues, trade-offs, next action? | 趋势行情里，何时把止损从入场点移到盈亏平衡？ |
-| **可迁移性** | Where else does the *pattern* reuse? Near (same domain) + far (shared structure, distant surface) | 止损的「先锁最大可承受损失」还能用在哪些交易外场景？ |
+| **有什么用** | What problem / situation / outcome is this for? | 趋势跟踪里，入场后先设固定止损，主要是为了锁住什么？ |
+| **为什么有用** | Why does it matter? Mechanism? What failure does it prevent? | 趋势单已浮盈时，为什么不把止损移到盈亏平衡，容易把盈利单做成亏损单？ |
+| **怎么用** | When / how to apply? Steps, cues, trade-offs, next action? | 趋势单已浮盈、结构未破时，把止损从入场点移到盈亏平衡，是为了防止什么？ |
+| **可迁移性** | Where else does the *pattern* reuse? Near (same domain) + far (shared structure, distant surface) | 「先锁最大可承受损失」这个动作，仓位管理和写期权里各是哪一个同类用法？ |
 
 **Gate before writing:**
 
@@ -21,7 +21,7 @@ Use when a fact is borderline, wording is bloated, or two concepts interfere.
 3. If a definition is truly the working unit, keep it short and attach a mini-use in the answer: `用途：…` / `例如：…`.
 4. **Transfer quality:** near transfer must feel like the same move; far transfer must name the shared structure. No forced metaphors.
 
-**Rewrite habit:** "什么是 X？" → prefer "X 解决什么问题？" / "为什么需要 X？" / "何时/如何用 X？" / "同一模式还能用在哪？" when the source allows.
+**Rewrite habit:** "什么是 X？" → prefer "在 [框架/处境] 里，X 解决什么问题？" / "这个处境下为什么需要 X？" / "给定这个具体场景，下一步？" / "同一模式还能用在哪个点得着的同类场景？" when the source allows. See §13.
 
 ## 1. Understand before memorizing
 
@@ -98,7 +98,7 @@ Ordered processes: use pairwise **"what follows X?"** or overlapping clozes in a
 ## 9. Optimize wording
 
 - Delete filler, hedge words, and needless passive voice.
-- Shortest question that still uniquely identifies the fact.
+- Shortest question that still uniquely identifies the **knowledge point** (framework + situation + fact) — not the shortest string. See §13.
 - Shortest answer that is still correct.
 
 ## 10. Anchor to other memories
@@ -109,16 +109,34 @@ Ordered processes: use pairwise **"what follows X?"** or overlapping clozes in a
 ## 11. Examples on definitions
 
 - If you must keep a definition, attach use: `[定义]。用途：[有什么用]。例如：[怎么用的例子]。`
+- The `例如` must be a **concrete case** from the source (named situation, number, actor) — not "实际使用时" / "when you apply it".
 - Prefer skipping pure definitions when an application card already covers the idea.
 
 ## 12. Emotion / vividness
 
 - Vivid hooks help sticky facts; overuse creates interference. Rare.
 
-## 13. Context cues
+## 13. Knowledge-point context
 
-- `deck` + `category` already supply domain context — questions need not restate the whole field.
-- Still keep the question self-contained enough to answer without opening the source.
+`deck` / `category` are **browse labels**, not review cues. Mixed-due review interleaves many decks; chips can be ignored or renamed. A card that is only unambiguous *inside its category* fails in review.
+
+**Test:** cover the deck/category and still know *which* idea this is. If the same front could live in two theories and have two answers, it is under-contextualized.
+
+Add the **minimum discriminating context** — not a lecture:
+
+| Layer | On the card when | Example |
+|-------|------------------|---------|
+| **归属** | the term is homonymous, borrowed, or framework-local | In FSRS, stability estimates… / ICT 里 FVG 出现在什么结构之后？ |
+| **处境** | the fact is a rule, diagnosis, or next action | 训练误差低、验证误差明显高时… / 趋势单已浮盈且结构未破时… |
+| **用例** | the source has a real instance (default for 怎么用) | The question *is* the case; or answer `例如：…` with actors/numbers/a pointable situation |
+
+**Do not** prefix every card with the whole field ("生物学中，细胞生物学里，关于细胞膜…"). Unique names (细胞膜, Paris) need no wrapper.
+
+**Do not** write generic templates as if they were cases: "何时用 X？" / "例如：实际使用时". A case names something you could point at.
+
+Form B: the statement around the blank must still be readable **and situated** with the blank hidden.
+
+This overrides "shortest string" (§9): shortest *unambiguous* cue, not fewest characters.
 
 ## 14. Redundancy is welcome
 
@@ -146,6 +164,10 @@ Ordered processes: use pairwise **"what follows X?"** or overlapping clozes in a
 | Anti-pattern | Fix |
 |--------------|-----|
 | Pure "什么是 X？" with no use context | Rewrite to 有什么用 / 为什么有用 / 怎么用 / 可迁移性, or skip |
+| Floating term ("What is stability?" / "止损解决什么问题？") | Name the framework + situation on the question |
+| Generic "何时用 X？" with no case | Front a concrete source case (actors / numbers / situation) |
+| Relying on deck/category as the only situating cue | Put 归属/处境 on the question; chips are browse labels |
+| Background dump on the front | Discriminating words only — unique names need no field prefix |
 | Forced far analogy (surface pun only) | Drop far transfer; keep near only if solid |
 | Glossary dump (term ↔ definition only) | Keep only terms that unlock decisions; add 用途/例子 in answer |
 | "Explain the whole process" | Split into atomic **how-to** steps |

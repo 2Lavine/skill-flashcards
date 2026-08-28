@@ -7,7 +7,7 @@ description: SourCards flashcard import skill. Generate spaced-repetition flashc
 
 Transform learning material into well-formulated spaced-repetition cards, lint them, and import them.
 
-**North star:** cards train *use* and *transfer*, not encyclopedic recitation. For every keepable idea, prioritize — **有什么用** · **为什么有用** · **怎么用** · **可迁移性** (near + far transfer when the pattern is real). Utility beats coverage.
+**North star:** cards train *use* and *transfer*, not encyclopedic recitation. For every keepable idea, prioritize — **有什么用** · **为什么有用** · **怎么用** · **可迁移性** (near + far transfer when the pattern is real). Utility beats coverage. A keepable card still **sits in its knowledge-point context** (framework + situation + a concrete case) — a floating slogan is not a card.
 
 ## Read on demand
 
@@ -18,7 +18,7 @@ Do **not** reload everything every time. Open only what the current step needs:
 | [references/format.md](references/format.md) | Writing/editing card JSON, cloze form, tags, math/LaTeX, or examples |
 | [references/media.md](references/media.md) | Local image/audio → official `/api/media` (same Personal Integration Token as import) or GitHub BYO |
 | [references/disciplines.md](references/disciplines.md) | Assigning `deck` / `category` |
-| [references/quality-rules.md](references/quality-rules.md) | Unsure whether a fact deserves a card, or how to split/word it |
+| [references/quality-rules.md](references/quality-rules.md) | Unsure whether a fact deserves a card, how to split/word it, or whether the knowledge-point is situated |
 | [references/api.md](references/api.md) | Personal Integration Token scopes; import, catalog, list batches, or roll back |
 | [../../examples/cards.json](../../examples/cards.json) | Want a complete worked template: note → Form A/B → tags → `$$` math, all lint-clean |
 
@@ -32,22 +32,27 @@ These override density targets and examples:
    - **怎么用 (how to apply):** when to use it, the steps/cues, trade-offs, diagnosis, next action.
    - **可迁移性 (transfer):** where else the same *pattern* applies — **近迁移** (same/adjacent domain) and, when a solid isomorphism exists, **远迁移** (unrelated surface, shared structure). Never force far transfer.
    Gate: if none of the use cores can be answered from the source (only a bare name/definition remains), **skip** — unless the user explicitly wants exam/recitation coverage. Bare "What is X?" definitions are last resort; rewrite toward these cores when the source supports it.
-2. **One fact (or one usable skill) per card.** Answerable in ~3–5 seconds. Split complex ideas. A "fact" here is preferably a decision rule or applied consequence, not a dictionary entry.
-3. **No sets / laundry lists.** Never "What are the N types of X?" Split into per-member cards (or overlapping clozes for ordered steps). Prefer one card per *when to use member M* over a pure name list.
-4. **No ordinal-index cues.** Never ask "What is the Nth principle/concept/step of X?" / "X 的第 N 个原则/概念是什么？" The ordinal is not retrieval-worthy knowledge — the learner memorizes a textbook index, not the idea. Identify the member by **content** (name, definition cue, role, what precedes/follows), not by list position. Exception only when the ordinal **is** the fact (e.g. constitutional amendment numbers, "Third Law of Thermodynamics" as a proper name).
-5. **Form A vs Form B — never mix.**
+2. **Knowledge-point context — discriminating, not a lecture.** `deck` / `category` are browse labels; mixed-due review will not re-teach which theory this is. Cover those chips and the question must still uniquely identify the knowledge point:
+   - **归属:** name the framework/theory when the term isn't unique ("In FSRS, stability…" not "What is stability?").
+   - **处境:** the situation, constraint, or preceding condition the fact lives in.
+   - **用例:** one concrete case from the source — on 怎么用 cards the question *is* the case; otherwise put `例如：…` in the answer (actors/numbers/a pointable situation, not "实际使用时").
+   Unique names (细胞膜, Paris) need no field prefix. Do not dump background paragraphs. Details: quality-rules.md §13.
+3. **One fact (or one usable skill) per card.** Answerable in ~3–5 seconds. Split complex ideas. A "fact" here is preferably a decision rule or applied consequence, not a dictionary entry.
+4. **No sets / laundry lists.** Never "What are the N types of X?" Split into per-member cards (or overlapping clozes for ordered steps). Prefer one card per *when to use member M* over a pure name list.
+5. **No ordinal-index cues.** Never ask "What is the Nth principle/concept/step of X?" / "X 的第 N 个原则/概念是什么？" The ordinal is not retrieval-worthy knowledge — the learner memorizes a textbook index, not the idea. Identify the member by **content** (name, definition cue, role, what precedes/follows), not by list position. Exception only when the ordinal **is** the fact (e.g. constitutional amendment numbers, "Third Law of Thermodynamics" as a proper name).
+6. **Form A vs Form B — never mix.**
    - **Form A (definition / application Q&A):** literal question, **no** `{{cN::...}}`. For definitions, term appears plainly in the question; full answer on the back. Prefer application/scenario Form A when the source supports it.
    - **Form B (cloze):** statement with a blank; front stays readable with the blank hidden; back is the deleted term(s), `;`-separated.
-   - "什么是 X？" / "What is X?" / "X 指什么？" → **Form A only**. Never hide the subject of a question inside a cloze. Prefer rewriting pure definition fronts into the four cores when the source supports them: "X 解决什么问题？" / "为什么需要 X？" / "何时/如何用 X？" / "同一模式还能用在哪？".
-6. **Tags:** foundational *working* concepts get `type:concept`; named instances get `type:entity`; else omit or `type:normal`. Every concept/entity card needs ≥1 `alias:<canonical name>` (plus common aliases).
-7. **Discipline:** `deck` = first-level discipline common name (Chinese); `category` = single second-level name, **no `/`**. Classify via disciplines.md. No pseudo-disciplines.
-8. **Provenance:**
+   - "什么是 X？" / "What is X?" / "X 指什么？" → **Form A only**. Never hide the subject of a question inside a cloze. Prefer rewriting pure definition fronts into the four cores when the source supports them: "在 [框架/处境] 里，X 解决什么问题？" / "为什么需要 X？" / "给定这个具体场景，下一步？" / "同一模式还能用在哪？".
+7. **Tags:** foundational *working* concepts get `type:concept`; named instances get `type:entity`; else omit or `type:normal`. Every concept/entity card needs ≥1 `alias:<canonical name>` (plus common aliases).
+8. **Discipline:** `deck` = first-level discipline common name (Chinese); `category` = single second-level name, **no `/`**. Classify via disciplines.md. No pseudo-disciplines.
+9. **Provenance:**
    - `source` = URL or file path only (batch-level). Omit if unknown. Never prose/summary/cropped text.
    - `course` = human title of the material (course/book/video). Optional.
    - `source_quote` = exact supporting sentence per card when available.
-9. **Math in JSON:** wrap **every** formula in `$$...$$` — display only. The card renderer ignores single-dollar `$...$`, which shows up on cards as literal text (e.g. `$233$`). Every LaTeX `\` must be doubled (`\\frac`, `\\sigma`). Single backslashes break or corrupt `JSON.parse`.
-10. **Precision > recall; utility > coverage.** Prefer fewer *usable* cards over padded trivia or encyclopedic definitions. Never invent facts the source does not support.
-11. **No manual priority fields.** Card array order is the review priority/reading order. The app stores it as `studyOrder`; never emit `reviewPriority` or `review_priority`.
+10. **Math in JSON:** wrap **every** formula in `$$...$$` — display only. The card renderer ignores single-dollar `$...$`, which shows up on cards as literal text (e.g. `$233$`). Every LaTeX `\` must be doubled (`\\frac`, `\\sigma`). Single backslashes break or corrupt `JSON.parse`.
+11. **Precision > recall; utility > coverage.** Prefer fewer *usable* cards over padded trivia or encyclopedic definitions. Never invent facts the source does not support.
+12. **No manual priority fields.** Card array order is the review priority/reading order. The app stores it as `studyOrder`; never emit `reviewPriority` or `review_priority`.
 
 ## Density control
 
@@ -120,7 +125,7 @@ Relax **only** when the user clearly wants short-term / exam coverage (`考试`,
 5. **Extract atomic facts / skills** — filter by density, then the utility / worth-remembering gate (use > recite).
 6. **Reconcile count** — if far outside target, re-check over/under-cardifying; never pad.
 7. **Set batch provenance** — `source` URI if known; `course` title if known; omit rather than invent.
-8. **Formulate cards** — Form A or B per fact; apply hard constraints; see quality-rules.md when stuck.
+8. **Formulate cards** — situate the knowledge point (归属 / 处境 / 用例); Form A or B per fact; apply hard constraints; see quality-rules.md §13 when stuck.
 9. **Assign discipline & tags** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`.
 10. **Self-validate** — run the checklist below on every card.
 11. **Output JSON** — one valid JSON object (code block or file). Local media paths OK while drafting.
@@ -130,6 +135,7 @@ Relax **only** when the user clearly wants short-term / exam coverage (`考试`,
 ## Quality checklist
 
 - [ ] **Utility first:** the card targets 有什么用 / 为什么有用 / 怎么用 / 可迁移性 — not pure label recitation?
+- [ ] **Context:** cover deck/category — still uniquely this knowledge point? Framework named if the term isn't unique? Situation on 怎么用/诊断? One concrete source case (front, or `例如：` with actors/numbers)?
 - [ ] If the front is "什么是 X？" / "What is X?", rewrite toward what-for / why / how-to-apply / transfer when the source allows.
 - [ ] Transfer cards (if any): near = same-domain reuse; far = shared structure, not surface puns — skip forced analogies.
 - [ ] One fact / usable skill? 3–5s answer? Single unambiguous answer?
@@ -142,7 +148,7 @@ Relax **only** when the user clearly wants short-term / exam coverage (`考试`,
 - [ ] `source_quote` supports the card (else drop the claim)?
 - [ ] LaTeX backslashes doubled for JSON?
 - [ ] No legacy `reviewPriority` / `review_priority` field; card array order expresses reading order?
-- [ ] Wording minimal; definitions include a concrete example when useful?
+- [ ] Wording minimal; definitions include a concrete source case (`例如：` with actors/numbers) when useful?
 - [ ] Media cards: if language study, `lang:<code>` + pick **one** of `type:vocab` / `type:listening` / `type:reading` (do not stack vocab+listening)?
 - [ ] Listening cards: question-side `<audio src>` present; prefer media-only / non-spoiler front?
 - [ ] Every media `src` is absolute `https://` (no `./`, `file://`, or bare disk paths) — run `upload-media` if not?
@@ -226,12 +232,12 @@ output JSON for manual Import in the app.
 
 Map every card to one of the four cores when possible. Prefer use and transfer over label recall:
 
-| Core | Typical fronts |
+| Core | Typical fronts (always situated — framework + situation, not a floating X) |
 |------|----------------|
-| **有什么用** | X 解决什么问题？ / 什么场景需要 X？ / What is X for? |
-| **为什么有用** | 为什么 X 有效？ / X 避免什么失败？ / Why does X matter here? |
-| **怎么用** | 何时用 X？ / 给定场景下一步？ / How do you apply X? |
-| **可迁移性** | 同一模式还能用在哪些同类场景？ / 哪个不相关领域共享同一结构？ |
+| **有什么用** | 在 [框架/处境] 里，X 解决什么问题？ / 什么具体场景需要 X？ |
+| **为什么有用** | 在这个处境下，为什么 X 有效？ / 不做 X 会掉进什么失败？ |
+| **怎么用** | 给定这个具体场景（题干就是 case），下一步？ — not 「何时用 X？」 |
+| **可迁移性** | 同一模式还能用在哪个**点得着的**同类场景？ / 哪个不相关领域共享同一结构？ |
 
 Forms (any core):
 

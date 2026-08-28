@@ -224,8 +224,8 @@ All examples below are meant to be imitated. They obey Form A/B, tags/aliases, n
   "source": "https://example.edu/bio/cell-structure",
   "cards": [
     {
-      "question": "细胞膜的主要功能是什么？",
-      "answer": "控制物质进出细胞，维持细胞内部环境相对稳定。",
+      "question": "真核细胞里，细胞膜主要靠什么维持内部环境相对稳定？",
+      "answer": "控制物质进出细胞。例如：葡萄糖经载体蛋白进入细胞，大分子则不能自由穿过脂双层。",
       "tags": ["type:entity", "细胞", "alias:细胞膜", "alias:cell membrane"],
       "category": "细胞生物学",
       "source_quote": "细胞膜控制物质进出"
@@ -264,8 +264,8 @@ All examples below are meant to be imitated. They obey Form A/B, tags/aliases, n
   "source": "https://github.com/open-spaced-repetition/fsrs4anki/wiki",
   "cards": [
     {
-      "question": "What is FSRS?",
-      "answer": "A spaced-repetition algorithm that models memory with stability, difficulty, and retrievability.",
+      "question": "In spaced repetition, what scheduling problem does FSRS mainly solve that SM-2 does not?",
+      "answer": "It models each card's memory with independent stability, difficulty, and retrievability, instead of folding difficulty into one factor. Example: two cards with the same SM-2 ease can get different FSRS intervals when their review histories diverge.",
       "tags": ["type:concept", "spaced-repetition", "alias:FSRS", "alias:Free Spaced Repetition Scheduler"],
       "category": "学习科学",
       "source_quote": "FSRS is a spaced repetition algorithm that uses a three-component model of memory: stability, difficulty, and retrievability."
@@ -308,8 +308,8 @@ Also never write ordinal-index cards like "What is the 1st component of FSRS?" /
   "source": "/notes/stats-sd.md",
   "cards": [
     {
-      "question": "样本标准差 $$s$$ 的公式是什么？",
-      "answer": "$$s = \\sqrt{\\frac{1}{N-1}\\sum_{i=1}^{N}(r_i-\\bar{r})^2}$$",
+      "question": "推断统计里，无偏样本标准差 $$s$$ 的公式是什么？",
+      "answer": "$$s = \\sqrt{\\frac{1}{N-1}\\sum_{i=1}^{N}(r_i-\\bar{r})^2}$$。分母用 $$N-1$$ 而不是 $$N$$，是为了得到总体方差的无偏估计。",
       "tags": ["type:concept", "statistics", "alias:样本标准差", "alias:sample standard deviation"],
       "category": "概率论",
       "source_quote": "样本标准差用无偏估计，分母为 N-1。"
@@ -334,8 +334,8 @@ Also never write ordinal-index cards like "What is the 1st component of FSRS?" /
   "source": "https://docs.python.org/3/glossary.html#term-decorator",
   "cards": [
     {
-      "question": "What is a Python decorator?",
-      "answer": "A callable that takes a function and returns a modified function or callable wrapper.",
+      "question": "In Python, what problem does a decorator mainly solve without rewriting the wrapped function?",
+      "answer": "It lets you wrap a function with extra behavior (logging, cache, access control) by passing the function to a callable that returns a modified function. Example: `@lru_cache` on `def fib(n):` caches results without changing `fib`'s body.",
       "tags": ["type:concept", "python", "alias:decorator", "alias:装饰器"],
       "category": "程序设计语言",
       "source_quote": "Python decorators are functions that modify other functions."
