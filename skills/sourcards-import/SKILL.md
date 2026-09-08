@@ -121,16 +121,27 @@ Relax **only** when the user clearly wants short-term / exam coverage (`考试`,
 1. **Determine density** — explicit request, else infer; default `medium`.
 2. **Identify genre** — conversation / narrative / expository / textbook.
 3. **Estimate target count** — using language-aware size units. Guardrail, not quota.
-4. **Parse input** — concepts, facts, domain, language, locatable URI.
-5. **Extract atomic facts / skills** — filter by density, then the utility / worth-remembering gate (use > recite).
-6. **Reconcile count** — if far outside target, re-check over/under-cardifying; never pad.
-7. **Set batch provenance** — `source` URI if known; `course` title if known; omit rather than invent.
-8. **Formulate cards** — situate the knowledge point (归属 / 处境 / 用例); Form A or B per fact; apply hard constraints; see quality-rules.md §13 when stuck.
-9. **Assign discipline & tags** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`.
-10. **Self-validate** — run the checklist below on every card.
-11. **Output JSON** — one valid JSON object (code block or file). Local media paths OK while drafting.
-12. **Resolve media** — if any card embeds local/relative image or audio, run `upload-media` with your **own image host** configured (default: `http` provider posting to the `SOURCARDS_MEDIA_UPLOAD_URL` from `media.config.json` / env) so every `src` is absolute `https://` before lint. See [media.md](references/media.md).
-13. **Lint, then import** — fix blocking lint errors before POST. On bad import, roll back and re-import.
+4. **Parse input** — concepts, facts, domain, language, locatable URI. Note whether the source has natural units (chapters / numbered sections / lectures / split files).
+5. **Partition if long** — if the source will not fit one generation pass **and** it has those units, run **Long source** below (it replaces steps 6–11 per unit). Otherwise continue on the whole source.
+6. **Extract atomic facts / skills** — filter by density, then the utility / worth-remembering gate (use > recite).
+7. **Reconcile count** — if far outside target, re-check over/under-cardifying; never pad.
+8. **Set batch provenance** — `source` URI if known; `course` title if known; omit rather than invent.
+9. **Formulate cards** — situate the knowledge point (归属 / 处境 / 用例); Form A or B per fact; apply hard constraints; see quality-rules.md §13 when stuck.
+10. **Assign discipline & tags** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`.
+11. **Self-validate** — run the checklist below on every card.
+12. **Output JSON** — one valid JSON object (code block or file). Local media paths OK while drafting.
+13. **Resolve media** — if any card embeds local/relative image or audio, run `upload-media` with your **own image host** configured (default: `http` provider posting to the `SOURCARDS_MEDIA_UPLOAD_URL` from `media.config.json` / env) so every `src` is absolute `https://` before lint. See [media.md](references/media.md).
+14. **Lint, then import** — fix blocking lint errors before POST. On bad import, roll back and re-import.
+
+## Long source
+
+Use when the material is too large for one generation pass **and** it has natural units (book chapters, numbered sections, lectures, split files). Prefer the author's TOC over arbitrary token chunks. Skip this branch for a short single-piece note.
+
+1. **Pilot the first unit.** Cardify **only** the first coherent unit (prefer chapter 1 / first section) through steps 6–11. Lint that small batch. The result is the **batch contract**: density, language, `deck`, category naming, Form A/B mix, tag/`alias` style, `course`/`source`, plus 2–4 example cards from the pilot. If the user is in the conversation, show those samples and wait for a correction before scaling. Done when the pilot is lint-clean and the contract is locked.
+
+2. **Fan-out the rest.** One remaining unit per worker, each running steps 6–11 on **only that unit's text**, plus this skill's hard constraints and the locked contract (include the pilot's example cards / aliases so chapter 1 is not recardified). If the host can spawn parallel sub-agents, dispatch them concurrently; if it cannot, walk the units sequentially with the same contract. Do not invent a sub-agent API the host does not expose. Workers output JSON (`cards` for their unit); they do not `POST /api/import` and they do not re-decide density/`deck`/`course`. Sibling units may overlap — the parent drops duplicate claims at merge.
+
+3. **Merge, then resume.** Concatenate `cards` in source-unit order into one JSON object (same `deck` / `course` / `source`). Resume at step 12. Parent lints the merged file. Split `POST /api/import` at the 200-card cap if the merge exceeds it.
 
 ## Quality checklist
 
