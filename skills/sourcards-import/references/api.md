@@ -67,19 +67,27 @@ existing key wins; files never override an already-set env var):
 2. This skill folder's `.env.local` then `.env` (personal overlay)
 3. Walk-up `.env.local` / `.env` from the working directory and the script
 
-If still missing, the agent asks you to paste a token and writes this skill
-folder's `.env.local` via [`scripts/save-token.mjs`](../scripts/save-token.mjs)
-(gitignored). You can also copy [`.env.example`](../.env.example) → `.env`
-yourself. Do not commit the filled file, and do not print the value.
+If still missing, prefer browser login (no copy):
 
-Create a token in the app:
+```bash
+node scripts/login.mjs
+```
+
+That opens `/cli/authorize`, mints a Personal Integration Token after you
+confirm, and writes this skill folder's gitignored `.env.local`. The script
+never prints the token. Use `--no-open` if a browser cannot be launched.
+
+Fallback: paste a token from the app and write `.env.local` via
+[`scripts/save-token.mjs`](../scripts/save-token.mjs):
 
 ```text
 Settings → Integrations → Personal Integration Tokens → Create
 ```
 
 The full value is shown **once**. Older general API keys are not upgraded;
-revoke them and create a Personal Integration Token.
+revoke them and create a Personal Integration Token. You can also copy
+[`.env.example`](../.env.example) → `.env` yourself. Do not commit the filled
+file, and do not print the value.
 
 ## Endpoint
 

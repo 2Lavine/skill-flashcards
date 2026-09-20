@@ -25,9 +25,10 @@ Do **not** reload everything every time. Open only what the current step needs:
 ## Hard constraints
 
 1. **Token, not session.** The API is called with a Personal Integration Token
-   (`FLASHCARD_API_KEY`, prefix `sc_int_…`). If the token is missing, point the user
-   to `Settings → Integrations → Personal Integration Tokens → Create`; the full
-   value is shown once.
+   (`FLASHCARD_API_KEY`, prefix `sc_int_…`). If the token is missing, run the
+   import skill's `scripts/login.mjs` (browser authorize, no copy) or point the
+   user to `Settings → Integrations → Personal Integration Tokens → Create`
+   (full value shown once).
 2. **stats:read only.** The script touches exactly three GET endpoints:
    `/api/stats`, `/api/daily-counts`, `/api/streak`. Never ask for card bodies,
    review logs, or any other endpoint — tokens cannot access them.
@@ -42,7 +43,8 @@ Do **not** reload everything every time. Open only what the current step needs:
 
 1. **Ensure the token.** `FLASHCARD_API_KEY` from the process environment, else
    this skill folder's `.env.local` / `.env` (copy [`.env.example`](.env.example)).
-   If still missing, create one in the app. Do not print the value.
+   If still missing, run sibling `../sourcards-import/scripts/login.mjs` (or
+   paste a token). Do not print the value.
 2. **Fetch.** Default report covers the last 7 days:
 
    ```bash

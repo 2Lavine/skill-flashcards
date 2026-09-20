@@ -179,6 +179,7 @@ SKILL_ROOT="skills/sourcards-import"   # inside this plugin repo
 # sourcards-lint-cards cards.json
 # sourcards-upload-media cards.json --out cards.json
 # sourcards-save-token --check
+# sourcards-login
 
 # local/relative media → absolute https via YOUR image host
 # Configure your own upload endpoint first (see references/media.md):
@@ -207,21 +208,30 @@ Import, catalog, list batches, and rollback: [references/api.md](references/api.
 **Token.** Before import / catalog / rollback / official media, ensure a key:
 
 ```bash
-node "$SKILL_ROOT/scripts/save-token.mjs" --check
+node "$SKILL_ROOT/scripts/login.mjs" --check
 ```
 
 - Exit 0: proceed (process env, else this skill folder's `.env.local` / `.env`).
-- Exit 1: **stop and ask** the user to paste a Personal Integration Token.
-  Where: `Settings → Integrations → Personal Integration Tokens → Create`.
-  Prefix `sc_int_…`; the full value is shown once. Then persist (do not print
-  the value; confirm only that it was saved) and re-run `--check`:
+- Exit 1: **stop**. Prefer browser login (no copy of `sc_int_…`):
+
+  ```bash
+  node "$SKILL_ROOT/scripts/login.mjs"
+  ```
+
+  Tell the user a browser should open; they sign in if needed, confirm the
+  code matches the terminal, then click Authorize. The script writes
+  gitignored `.env.local` and **must not print the token**. If the browser
+  cannot open, re-run with `--no-open` and give them the printed URL.
+
+  Fallback if they decline browser login: paste a Personal Integration Token
+  from `Settings → Integrations → Personal Integration Tokens → Create`
+  (shown once, prefix `sc_int_…`):
 
   ```bash
   printf '%s\n' '<pasted-token>' | node "$SKILL_ROOT/scripts/save-token.mjs"
   ```
 
-  That upserts `FLASHCARD_API_KEY` in this skill folder's gitignored
-  `.env.local`. Subsequent runs pick it up automatically.
+  Then re-run `--check`. Never `cat` `.env.local`.
 
 Token scopes are `imports:create|read|rollback`, `media:upload`,
 `catalog:read`, `stats:read` — no card bodies, reviews, Coach, settings,
