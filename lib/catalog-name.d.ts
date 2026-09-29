@@ -1,5 +1,6 @@
 export declare function normalizeCatalogName(s: string): string;
 export declare function catalogEditDistance(a: string, b: string): number;
+export declare function isNearNormalizedCatalogName(nn: string, np: string): boolean;
 export declare function findNearCatalogName(
   name: string,
   pool: readonly string[],

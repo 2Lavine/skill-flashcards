@@ -20,7 +20,8 @@ Do **not** reload everything every time. Open only what the current step needs:
 | [references/disciplines.md](references/disciplines.md) | Assigning `deck` / `category` |
 | [references/quality-rules.md](references/quality-rules.md) | Unsure whether a fact deserves a card, how to split/word it, or whether the knowledge-point is situated |
 | [references/api.md](references/api.md) | Personal Integration Token scopes; import, catalog, list batches, or roll back |
-| [../../examples/cards.json](../../examples/cards.json) | Want a complete worked template: note → Form A/B → tags → `$$` math, all lint-clean |
+| [examples/cards.json](examples/cards.json) | Worked template, lint-clean. Read `$SKILL_ROOT/examples/cards.json`. Do not open `apm_modules/...` or `../../examples` |
+| [examples/source-material.md](examples/source-material.md) | Sample note that the template was cardified from |
 
 ## Hard constraints
 
@@ -130,7 +131,7 @@ Relax **only** when the user clearly wants short-term / exam coverage (`考试`,
 10. **Assign discipline & tags** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`.
 11. **Self-validate** — run the checklist below on every card.
 12. **Output JSON** — one valid JSON object (code block or file). Local media paths OK while drafting.
-13. **Resolve media** — if any card embeds local/relative image or audio, run `upload-media` with your **own image host** configured (default: `http` provider posting to the `SOURCARDS_MEDIA_UPLOAD_URL` from `media.config.json` / env) so every `src` is absolute `https://` before lint. See [media.md](references/media.md).
+13. **Resolve media** — if no card has a local/relative image or audio, skip `upload-media`. If one does, run `upload-media`: with `FLASHCARD_API_KEY` set and no BYO host, it POSTs to `https://sourcard.sourmonkey.xyz/api/media` (Lite/Lifetime; same token as import). `403` or a Free account: `--provider github`. A custom `SOURCARDS_MEDIA_UPLOAD_URL` still overrides. Do not invent a gateway. See [media.md](references/media.md).
 14. **Lint, then import** — fix blocking lint errors before POST. On bad import, roll back and re-import.
 
 ## Long source
@@ -139,7 +140,9 @@ Use when the material is too large for one generation pass **and** it has natura
 
 1. **Pilot the first unit.** Cardify **only** the first coherent unit (prefer chapter 1 / first section) through steps 6–11. Lint that small batch. The result is the **batch contract**: density, language, `deck`, category naming, Form A/B mix, tag/`alias` style, `course`/`source`, plus 2–4 example cards from the pilot. If the user is in the conversation, show those samples and wait for a correction before scaling. Done when the pilot is lint-clean and the contract is locked.
 
-2. **Fan-out the rest.** One remaining unit per worker, each running steps 6–11 on **only that unit's text**, plus this skill's hard constraints and the locked contract (include the pilot's example cards / aliases so chapter 1 is not recardified). If the host can spawn parallel sub-agents, dispatch them concurrently; if it cannot, walk the units sequentially with the same contract. Do not invent a sub-agent API the host does not expose. Workers output JSON (`cards` for their unit); they do not `POST /api/import` and they do not re-decide density/`deck`/`course`. Sibling units may overlap — the parent drops duplicate claims at merge.
+2. **Cardify the remaining units in this same agent, one unit at a time.** For each remaining unit, in source order: read only that unit; run steps 6–11 with the locked contract and the pilot's example cards (do not recardify the pilot); append that unit's `cards`. Do not `POST /api/import`. Do not change density, `deck`, or `course`. Sibling units may overlap — drop duplicate claims at merge.
+
+   Parallel only if your current tool list already contains a sub-agent spawn tool. One unit per call. The call's prompt is this skill's hard constraints, the locked contract, the pilot example cards, and that unit's text. It returns JSON `{ "cards": [...] }` and does not import. If you cannot name that tool from the tool list you were given, stay on the sequential loop. Do not invent a tool.
 
 3. **Merge, then resume.** Concatenate `cards` in source-unit order into one JSON object (same `deck` / `course` / `source`). Resume at step 12. Parent lints the merged file. Split `POST /api/import` at the 200-card cap if the merge exceeds it.
 
@@ -166,46 +169,70 @@ Use when the material is too large for one generation pass **and** it has natura
 
 ## Lint → import → recover
 
-Scripts live in this skill's `scripts/` directory. Resolve the skill root from the active install (project or user skills):
+Scripts live next to this file. **`SKILL_ROOT` is the directory of the SKILL.md you loaded.** Do not pick another install path.
+
+If the host did not give you that path, run this and take stdout. It chooses the copy nearest to the current directory. Stderr listing other copies is not a choice.
 
 ```bash
-# Canonical monorepo package (source of truth):
-SKILL_ROOT="skills/sourcards-import"   # inside this plugin repo
-# or after install / project symlink:
-# SKILL_ROOT=".agents/skills/sourcards-import"
-# SKILL_ROOT=".claude/skills/sourcards-import"
-# SKILL_ROOT="$HOME/.skills-manager/skills/sourcards-import"
-# Or use the package bin after install:
-# sourcards-lint-cards cards.json
-# sourcards-upload-media cards.json --out cards.json
-# sourcards-save-token --check
-# sourcards-login
+SKILL_ROOT=$(node --input-type=module <<'EOF'
+import { existsSync, realpathSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { homedir } from "node:os";
+const name = "sourcards-import";
+const marker = "scripts/lint-cards.mjs";
+const hits = [];
+const add = (p) => {
+  if (!existsSync(join(p, "SKILL.md")) || !existsSync(join(p, marker))) return;
+  let real; try { real = realpathSync(p); } catch { return; }
+  if (!hits.includes(real)) hits.push(real);
+};
+let dir = process.cwd();
+for (let i = 0; i < 8; i++) {
+  add(dir);
+  add(join(dir, "skills", name));
+  add(join(dir, ".agents", "skills", name));
+  add(join(dir, ".claude", "skills", name));
+  const parent = dirname(dir);
+  if (parent === dir) break;
+  dir = parent;
+}
+if (!hits.length) {
+  const home = homedir();
+  for (const p of [join(home, ".agents", "skills", name), join(home, ".claude", "skills", name), join(home, ".skills-manager", "skills", name)]) add(p);
+}
+if (!hits.length) { process.stderr.write("sourcards-import not found\n"); process.exit(1); }
+if (hits.length > 1) process.stderr.write("using nearest skill copy; ignored: " + hits.slice(1).join(", ") + "\n");
+process.stdout.write(hits[0] + "\n");
+EOF
+)
+```
 
-# local/relative media → absolute https via YOUR image host
-# Configure your own upload endpoint first (see references/media.md):
-#   1. copy media.config.example.json → media.config.json and fill in your gateway
-#   2. or export SOURCARDS_MEDIA_UPLOAD_URL / SOURCARDS_MEDIA_UPLOAD_TOKEN
-# No official upload URL is hard-coded — bring your own image host.
+Template: `$SKILL_ROOT/examples/cards.json` and `$SKILL_ROOT/examples/source-material.md`. Do not read `apm_modules/2Lavine/skill-flashcards/examples/cards.json`.
+
+```bash
+# local image/audio only. With FLASHCARD_API_KEY and no BYO host, this posts to
+# https://sourcard.sourmonkey.xyz/api/media. Skip this command when there is no local media.
 node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
 
-# BYO git repo + jsDelivr (no upload endpoint needed):
+# Free account or 403 from /api/media:
 # node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --provider github --out cards.json
 
-# format lint only
 node "$SKILL_ROOT/scripts/lint-cards.mjs" cards.json
 
-# + catalog cross-check (recommended; needs $FLASHCARD_API_KEY → catalog:read)
+# catalog cross-check (needs FLASHCARD_API_KEY → catalog:read)
 node "$SKILL_ROOT/scripts/lint-cards.mjs" cards.json \
   --catalog https://sourcard.sourmonkey.xyz
 ```
 
 - **Exit 1:** blocking (invalid JSON escapes, control-char corruption, missing required fields). Fix and re-lint.
-- **Exit 0 + warnings:** quality drift (prose `source`, `/` in category, missing `alias:`, mixed cloze). Prefer fixing before import.
+- **Exit 0 + `CATALOG-DRIFT`:** a deck/category is a misspelling of one that already exists (心里学 / 心理学, 博弈 / 博弈论). Reuse the existing name, or ask the user. Do not import while it remains. Do not treat it as exit 1.
+- **Exit 0 + `CATALOG-NEW`:** nothing similar exists. A new deck/category is allowed. Do not block, and do not "fix" it away. 心理学 and 心理咨询 are different names; a `CATALOG-NEW` for one of them is not drift.
+- **Exit 0 + other warnings:** quality drift (prose `source`, `/` in category, missing `alias:`, mixed cloze). Prefer fixing before import.
 - **Exit 0 clean:** safe to import.
 
 Import, catalog, list batches, and rollback: [references/api.md](references/api.md).
 
-**Token.** Before import / catalog / rollback / official media, ensure a key:
+**Token.** One check command. Do not run `save-token.mjs --check` (it exits 2 and points here).
 
 ```bash
 node "$SKILL_ROOT/scripts/login.mjs" --check
@@ -235,9 +262,9 @@ node "$SKILL_ROOT/scripts/login.mjs" --check
 
 Token scopes are `imports:create|read|rollback`, `media:upload`,
 `catalog:read`, `stats:read` — no card bodies, reviews, Coach, settings,
-billing, or account APIs. Note: `media:upload` on your token only opens the
-**configured** upload endpoint you point `upload-media` at (see media.md); the
-platform's own `/api/media` is not available to regular users.
+billing, or account APIs. `upload-media` uses this token against
+`https://sourcard.sourmonkey.xyz/api/media` unless a BYO host is configured.
+Lite/Lifetime can upload; Free gets 403 and must use `--provider github`.
 
 **Bad-import recovery**
 

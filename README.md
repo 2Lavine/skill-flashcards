@@ -115,8 +115,10 @@ node skills/sourcards-library-lint/scripts/lint-library.mjs snapshot.json
 npm test
 ```
 
-媒体托管与 SourCards 服务端**解耦**：配置 `SOURCARDS_MEDIA_*`（R2/S3、http gateway、
-map 文件或 shell 命令）见 [media.md](skills/sourcards-import/references/media.md)。
+有 `FLASHCARD_API_KEY` 且没配自备图床时，`upload-media` 把本地媒体发到
+`https://sourcard.sourmonkey.xyz/api/media`（Lite/Lifetime）。Free 或 403 用
+`--provider github`。自备网关、R2、map 见
+[media.md](skills/sourcards-import/references/media.md)。
 
 ## 安装
 

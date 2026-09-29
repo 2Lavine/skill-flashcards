@@ -33,18 +33,30 @@ export function catalogEditDistance(a, b) {
 }
 
 /**
- * First near-match in pool for the same field spelled/spaced differently.
+ * Same catalog field, misspelled — not a related longer name.
+ * - one substitution, same length (心里学 / 心理学)
+ * - one extra trailing character (博弈 / 博弈论)
+ * Does NOT treat a longer different word as drift (心理学 / 心理咨询,
+ * 心理学 / 应用心理学).
+ */
+export function isNearNormalizedCatalogName(nn, np) {
+  if (!nn || !np || nn === np) return false;
+  if (nn.length === np.length && nn.length >= 2 && catalogEditDistance(nn, np) <= 1) {
+    return true;
+  }
+  const short = nn.length <= np.length ? nn : np;
+  const long = nn.length <= np.length ? np : nn;
+  return short.length >= 2 && long.length === short.length + 1 && long.startsWith(short);
+}
+
+/**
+ * First near-match in pool for the same field spelled differently.
  */
 export function findNearCatalogName(name, pool) {
   const nn = normalizeCatalogName(name);
   if (!nn) return undefined;
   for (const p of pool) {
-    const np = normalizeCatalogName(p);
-    if (!np || np === nn) continue;
-    if (np.includes(nn) || nn.includes(np)) return p;
-    const short = Math.min(nn.length, np.length);
-    if (short >= 2 && nn.slice(0, short) === np.slice(0, short)) return p;
-    if (catalogEditDistance(nn, np) <= 1) return p;
+    if (isNearNormalizedCatalogName(nn, normalizeCatalogName(p))) return p;
   }
   return undefined;
 }
@@ -59,12 +71,5 @@ export function catalogNameExists(name, pool) {
 export function findNearCatalogNames(name, pool) {
   const nn = normalizeCatalogName(name);
   if (!nn) return [];
-  return pool.filter((p) => {
-    const np = normalizeCatalogName(p);
-    if (!np || np === nn) return false;
-    if (np.includes(nn) || nn.includes(np)) return true;
-    const short = Math.min(nn.length, np.length);
-    if (short >= 2 && nn.slice(0, short) === np.slice(0, short)) return true;
-    return catalogEditDistance(nn, np) <= 1;
-  });
+  return pool.filter((p) => isNearNormalizedCatalogName(nn, normalizeCatalogName(p)));
 }

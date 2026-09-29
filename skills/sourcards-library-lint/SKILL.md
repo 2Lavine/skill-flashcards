@@ -38,10 +38,41 @@ Personal Integration Tokens do **not** authorize `GET /api/library-lint`, and th
 owner-scoped `catalog:read` deck/category endpoints do not include enough card
 counts or uncategorized data to reconstruct this snapshot.
 
+`SKILL_ROOT` is the directory of this SKILL.md. Do not pick among install layouts. If you were not given that path:
+
 ```bash
-SKILL_ROOT="skills/sourcards-library-lint"   # or installed skill path
+SKILL_ROOT=$(node --input-type=module <<'EOF'
+import { existsSync, realpathSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { homedir } from "node:os";
+const name = "sourcards-library-lint";
+const marker = "scripts/lint-library.mjs";
+const hits = [];
+const add = (p) => {
+  if (!existsSync(join(p, "SKILL.md")) || !existsSync(join(p, marker))) return;
+  let real; try { real = realpathSync(p); } catch { return; }
+  if (!hits.includes(real)) hits.push(real);
+};
+let dir = process.cwd();
+for (let i = 0; i < 8; i++) {
+  add(dir);
+  add(join(dir, "skills", name));
+  add(join(dir, ".agents", "skills", name));
+  add(join(dir, ".claude", "skills", name));
+  const parent = dirname(dir);
+  if (parent === dir) break;
+  dir = parent;
+}
+if (!hits.length) {
+  const home = homedir();
+  for (const p of [join(home, ".agents", "skills", name), join(home, ".claude", "skills", name), join(home, ".skills-manager", "skills", name)]) add(p);
+}
+if (!hits.length) { process.stderr.write("sourcards-library-lint not found\n"); process.exit(1); }
+if (hits.length > 1) process.stderr.write("using nearest skill copy; ignored: " + hits.slice(1).join(", ") + "\n");
+process.stdout.write(hits[0] + "\n");
+EOF
+)
 node "$SKILL_ROOT/scripts/lint-library.mjs" snapshot.json
-# package bin: sourcards-lint-library snapshot.json
 ```
 
 The CLI accepts snapshot files only. It does not authenticate to a live account.

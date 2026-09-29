@@ -5,7 +5,7 @@
 | File | What it is |
 |------|-----------|
 | [source-material.md](source-material.md) | 制卡**输入材料**（一段中文学习笔记）。替换成你自己的任何文本即可 |
-| [cards.json](cards.json) | 从源材料生成的卡片 JSON——**既是 lint 输入，也是 `POST /api/import` 的请求体**（同一份文件，不重复维护） |
+| [cards.json](cards.json) | 从源材料生成的卡片 JSON——**既是 lint 输入，也是 `POST /api/import` 的请求体**（同一份文件，不重复维护）。安装进 agent 的副本在 `skills/sourcards-import/examples/`，不要写 `apm_modules/.../examples/cards.json` |
 
 ## 30-second path
 

@@ -112,7 +112,7 @@ Fix by switching to Form A, or rewriting as a true Form B statement whose blank 
 
 Keep audio/images **inside** `question` / `answer` markdown. Do **not** invent `audioUrl` / `imageUrl` fields.
 
-**Hosting:** draft with local paths if needed (`./clips/term.mp3`); **before import** every media `src` must be absolute `https://`. Run `scripts/upload-media.mjs` — default is official `POST /api/media` with the same Personal Integration Token (`FLASHCARD_API_KEY`) as import, which requires token permission `media:upload` plus the owner's `media:upload` entitlement (Lite / Lifetime). Free / BYO: `--provider github`. Full setup: [media.md](media.md).
+**Hosting:** draft with local paths if needed (`./clips/term.mp3`); **before import** every media `src` must be absolute `https://`. If there is no local media, skip upload. Otherwise `scripts/upload-media.mjs` POSTs to `https://sourcard.sourmonkey.xyz/api/media` with `FLASHCARD_API_KEY` (Lite / Lifetime, permission `media:upload`). Free or 403: `--provider github`. A set `SOURCARDS_MEDIA_UPLOAD_URL` overrides the official URL. Full setup: [media.md](media.md).
 
 Supported tokens:
 

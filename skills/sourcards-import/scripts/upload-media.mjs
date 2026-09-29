@@ -10,12 +10,14 @@
  *   node upload-media.mjs cards.json --dry-run
  *   cat cards.json | node upload-media.mjs --out -
  *
- * Providers: s3 (R2/S3 SigV4), http (POST multipart to YOUR gateway), map (JSON
- *            rewrite only), command (shell $FILE $KEY $CONTENT_TYPE).
+ * Providers: s3 (R2/S3 SigV4), http (POST multipart), map (JSON rewrite only),
+ *            command (shell $FILE $KEY $CONTENT_TYPE).
  *
- * The http provider is user-configurable — it never hard-codes an upload URL.
- * Configure your own image host via `--config <file>` (see media.config.example.json)
- * or SOURCARDS_MEDIA_UPLOAD_URL.
+ * http default: when FLASHCARD_API_KEY is set and no BYO host is configured,
+ * POST {SOURCARDS_API_BASE_URL||https://sourcard.sourmonkey.xyz}/api/media
+ * with that same token. A custom SOURCARDS_MEDIA_UPLOAD_URL, github repo, or
+ * s3 config wins over the official endpoint. Free accounts get 403 — then
+ * --provider github.
  *
  * Exit: 0 success, 1 upload/IO/unresolved local media, 2 bad usage.
  */
@@ -175,7 +177,8 @@ Options:
 Providers (keep both configured; switch with PROVIDER / --provider):
   s3      R2/S3 SigV4 (SOURCARDS_MEDIA_S3_* + _S3_BASE_URL)
   github  public git repo + jsDelivr (REPO_DIR + _GITHUB_BASE_URL)
-  http    POST multipart to YOUR gateway (SOURCARDS_MEDIA_UPLOAD_URL / config)
+  http    POST multipart. Default with FLASHCARD_API_KEY: official /api/media.
+          Override with SOURCARDS_MEDIA_UPLOAD_URL or media.config.json
   map     rewrite only from --map file
   command shell $FILE $KEY via SOURCARDS_MEDIA_UPLOAD_CMD
 
@@ -309,18 +312,34 @@ function objectKeyForFile(filePath, body) {
 
 // ---- providers ---------------------------------------------------------------
 
+const DEFAULT_API_ORIGIN = 'https://sourcard.sourmonkey.xyz';
+
+function officialMediaUploadUrl() {
+  const raw = process.env.SOURCARDS_API_BASE_URL || process.env.FLASHCARD_API_BASE || DEFAULT_API_ORIGIN;
+  return `${String(raw).trim().replace(/\/$/, '')}/api/media`;
+}
+
+/** Fill the official /api/media endpoint when a token exists and no BYO host won. */
+function useOfficialHttpUpload() {
+  if (!process.env.FLASHCARD_API_KEY) return false;
+  if (!process.env.SOURCARDS_MEDIA_UPLOAD_URL) {
+    process.env.SOURCARDS_MEDIA_UPLOAD_URL = officialMediaUploadUrl();
+  }
+  if (!process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN) {
+    process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN = process.env.FLASHCARD_API_KEY;
+  }
+  return true;
+}
+
 function detectProvider() {
   if (provider) return provider.toLowerCase();
   if (process.env.SOURCARDS_MEDIA_PROVIDER) {
     return process.env.SOURCARDS_MEDIA_PROVIDER.toLowerCase();
   }
-  // Default: http only when an upload endpoint is explicitly configured
-  // (no hard-coded official URL — users host their own images/audio).
   const hasHttpConfig =
     process.env.SOURCARDS_MEDIA_UPLOAD_URL ||
     process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN;
   if (hasHttpConfig) return 'http';
-  // BYO fallbacks only when no configured http endpoint
   if (process.env.SOURCARDS_MEDIA_REPO_DIR) return 'github';
   if (
     process.env.SOURCARDS_MEDIA_S3_ENDPOINT &&
@@ -331,6 +350,7 @@ function detectProvider() {
     return 's3';
   }
   if (process.env.SOURCARDS_MEDIA_UPLOAD_CMD) return 'command';
+  if (useOfficialHttpUpload()) return 'http';
   return null;
 }
 
@@ -391,12 +411,13 @@ async function uploadMap(src, _localPath, _body, _contentType, _key) {
 }
 
 async function uploadHttp(src, localPath, body, contentType, key) {
+  if (!process.env.SOURCARDS_MEDIA_UPLOAD_URL) useOfficialHttpUpload();
   const url = process.env.SOURCARDS_MEDIA_UPLOAD_URL;
   if (!url) {
     throw new Error(
-      'http provider requires an upload endpoint: set SOURCARDS_MEDIA_UPLOAD_URL ' +
-        'or provide a media.config.json (see media.config.example.json). ' +
-        'No official upload URL is hard-coded — bring your own image host.',
+      'http provider has no upload endpoint. Set FLASHCARD_API_KEY to use ' +
+        `${officialMediaUploadUrl()} (Lite/Lifetime), or set SOURCARDS_MEDIA_UPLOAD_URL ` +
+        'for your own gateway. Free accounts: --provider github (references/media.md).',
     );
   }
   const token = process.env.SOURCARDS_MEDIA_UPLOAD_TOKEN || '';
@@ -648,7 +669,8 @@ if (toUpload.length > 0 && !jsonOut && configPath && mediaConfig) {
   console.error(`config: ${configPath} (+${configEnvSet.length} SOURCARDS_MEDIA_*)`);
 }
 if (toUpload.length > 0 && !jsonOut && providerName) {
-  console.error(`provider: ${providerName}`);
+  const uploadUrl = providerName === 'http' ? process.env.SOURCARDS_MEDIA_UPLOAD_URL : '';
+  console.error(`provider: ${providerName}${uploadUrl ? ` ${uploadUrl}` : ''}`);
 }
 
 if (toUpload.length === 0) {
@@ -660,9 +682,10 @@ if (toUpload.length === 0) {
   if (!providerName && !dryRun) {
     console.error(
       `Found ${toUpload.length} local media src(s) but no provider configured.\n` +
-        `Bring your own image host: set SOURCARDS_MEDIA_PROVIDER (github|s3|http|map|command) and related env, ` +
-        `pass --provider map --map file.json, or provide media.config.json (see media.config.example.json).\n` +
-        `See references/media.md.`,
+        `No FLASHCARD_API_KEY, so official ${officialMediaUploadUrl()} was not used.\n` +
+        `If this JSON has no local image/audio, do not run upload-media.\n` +
+        `Otherwise: node login.mjs --check, then re-run (Lite/Lifetime posts to that URL).\n` +
+        `Free or 403: --provider github. See references/media.md. Do not invent an upload URL.`,
     );
     for (const s of toUpload) console.error(`  - ${s}`);
     process.exit(1);

@@ -1,25 +1,20 @@
 #!/usr/bin/env node
 /**
- * Check or persist FLASHCARD_API_KEY in this skill folder's `.env.local`.
- *
- *   node save-token.mjs --check
- *     exit 0 if a token is already available (env or overlay)
- *     exit 1 if missing
- *     never prints the value
+ * Persist a pasted FLASHCARD_API_KEY in this skill folder's `.env.local`.
+ * This script does not log in and does not check whether a key exists.
  *
  *   printf '%s\n' 'sc_int_…' | node save-token.mjs
  *     upserts FLASHCARD_API_KEY in this skill folder's gitignored `.env.local`
  *     exit 0 on success, 2 on bad input
+ *
+ *   node save-token.mjs --check
+ *     exit 2. Token check is login.mjs --check (same folder).
  */
 
 import { readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  bootstrapEnv,
-  hasFlashcardApiKey,
-  persistFlashcardApiKey,
-} from '../lib/load-env.mjs';
+import { persistFlashcardApiKey } from '../lib/load-env.mjs';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
@@ -28,8 +23,8 @@ function usage() {
   process.stderr.write(
     [
       'Usage:',
-      '  node save-token.mjs --check',
       "  printf '%s\\n' 'sc_int_…' | node save-token.mjs",
+      '  node login.mjs --check',
       '',
     ].join('\n'),
   );
@@ -41,13 +36,16 @@ if (argv.includes('-h') || argv.includes('--help')) {
 }
 
 if (argv.includes('--check')) {
-  bootstrapEnv({ scriptDir });
-  if (hasFlashcardApiKey()) {
-    process.stdout.write('FLASHCARD_API_KEY is set\n');
-    process.exit(0);
-  }
-  process.stderr.write('FLASHCARD_API_KEY is missing\n');
-  process.exit(1);
+  process.stderr.write(
+    [
+      'save-token.mjs does not check or create a token.',
+      'Run: node login.mjs --check',
+      'Missing key: node login.mjs',
+      "Paste only: printf '%s\\n' 'sc_int_…' | node save-token.mjs",
+      '',
+    ].join('\n'),
+  );
+  process.exit(2);
 }
 
 if (argv.length) {

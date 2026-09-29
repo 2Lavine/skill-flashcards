@@ -20,19 +20,25 @@ Relative, `file://`, and bare disk paths will not load in the web/desktop/mobile
 
 Root-relative paths like `/demo/media/sample-a.mp3` are **SPA demo assets only** — not a model for user content.
 
-## Agent workflow (default = your own image host)
+## Agent workflow
 
-The `http` provider posts to **your** configured upload endpoint — no official
-upload URL is hard-coded. Configure it one of three ways:
+Default when `FLASHCARD_API_KEY` is set and no BYO host is configured:
+`upload-media` POSTs to `https://sourcard.sourmonkey.xyz/api/media` with that
+token (`SOURCARDS_API_BASE_URL` / `FLASHCARD_API_BASE` override the origin).
+Lite / Lifetime. Free receives 403 — then `--provider github`.
 
-1. **Config file (recommended):** copy `media.config.example.json` → `media.config.json`
+If the JSON has no local/relative image or audio, do not run `upload-media`.
+
+Override the official endpoint in one of three ways:
+
+1. **Config file:** copy `media.config.example.json` → `media.config.json`
    (gitignored), fill in your gateway, and pass `--config media.config.json`
    (or `$SOURCARDS_MEDIA_CONFIG`, or let the script auto-discover `media.config.json`
    from the script dir / cwd).
 2. **Env vars:** `SOURCARDS_MEDIA_UPLOAD_URL` (+ optional `SOURCARDS_MEDIA_UPLOAD_TOKEN`,
-   `SOURCARDS_MEDIA_HTTP_BASE_URL`).
-3. **BYO repo / bucket without any upload endpoint:** `--provider github` (public repo
-   + jsDelivr) or `--provider s3`.
+   `SOURCARDS_MEDIA_HTTP_BASE_URL`). A set URL wins over the official default.
+3. **BYO repo / bucket:** `--provider github` (public repo + jsDelivr) or `--provider s3`.
+   A configured repo or full S3 env also wins over the official default.
 
 ```text
 1. Formulate cards.json  (may embed ./local media paths)
@@ -43,14 +49,16 @@ upload URL is hard-coded. Configure it one of three ways:
 ```
 
 ```bash
-SKILL_ROOT="skills/sourcards-import"   # or package install path
+# SKILL_ROOT = directory of sourcards-import/SKILL.md (see that file's resolver)
 
-# http → your configured endpoint
+# official /api/media when FLASHCARD_API_KEY is set
+node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
+
+# your own gateway
 node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json \
   --config media.config.json --out cards.json
-# or: sourcards-upload-media cards.json --config media.config.json --out cards.json
 
-# GitHub BYO (no upload endpoint needed):
+# GitHub BYO (Free, or 403 from /api/media):
 # node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --provider github --out cards.json
 ```
 
@@ -68,19 +76,21 @@ node scripts/upload-media.mjs cards.json \
 
 | Path | Who | Skill |
 |------|-----|--------|
-| **Your own gateway** (configured `http` endpoint) | Anyone with an upload endpoint | **Default** when `SOURCARDS_MEDIA_UPLOAD_URL` / config is set |
-| **GitHub BYO** public repo + jsDelivr | Any membership (incl. Free) | `--provider github` |
+| **Official `/api/media`** | Lite / Lifetime, token has `media:upload` | **Default** when `FLASHCARD_API_KEY` is set and no BYO host is configured |
+| **Your own gateway** | Anyone with an upload endpoint | `SOURCARDS_MEDIA_UPLOAD_URL` or `media.config.json` |
+| **GitHub BYO** public repo + jsDelivr | Any membership, including Free | `--provider github` |
 | **S3/R2** | Personal bucket | `--provider s3` |
 
-The platform's own `/api/media` is a **maintainer-only** endpoint (not available
-to regular users) — regular imports host media on their own CDN. Schema stays
-unchanged: only URLs in markdown.
+Schema stays unchanged: only URLs in markdown. Official upload is
+`POST https://sourcard.sourmonkey.xyz/api/media` with the same
+`x-api-key` as import. 403 `media_upload_required` means this account cannot
+use that route — switch to `--provider github`.
 
 ## Providers
 
 | Provider | When | Needs |
 |----------|------|--------|
-| **`http`** (default) | Your own upload gateway | `SOURCARDS_MEDIA_UPLOAD_URL` (via env or `media.config.json`) |
+| **`http`** (default) | Official `/api/media`, or your gateway if `SOURCARDS_MEDIA_UPLOAD_URL` is set | `FLASHCARD_API_KEY`, or an explicit upload URL |
 | **`github`** | Free / BYO | `SOURCARDS_MEDIA_REPO_DIR` + `SOURCARDS_MEDIA_GITHUB_BASE_URL` |
 | **`s3`** | Personal R2/S3 (power user) | `SOURCARDS_MEDIA_S3_*` |
 | `map` / `command` | Escape hatches | see below |
@@ -114,6 +124,7 @@ missing env keys only — explicit env vars and `--provider` always win.
 2. else `SOURCARDS_MEDIA_REPO_DIR` → `github`
 3. else full personal `S3_*` → `s3`
 4. else `command` if set
+5. else `FLASHCARD_API_KEY` → **`http`** to `{API origin}/api/media` (`https://sourcard.sourmonkey.xyz` unless `SOURCARDS_API_BASE_URL` / `FLASHCARD_API_BASE` is set)
 
 ```bash
 # one-shot overrides
@@ -151,9 +162,7 @@ export SOURCARDS_MEDIA_PREFIX="cards/"
 4. Run:
 
 ```bash
-SKILL_ROOT=skills/sourcards-import
-node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --out cards.json
-# equivalent: --provider github
+node "$SKILL_ROOT/scripts/upload-media.mjs" cards.json --provider github --out cards.json
 ```
 
 jsDelivr may lag briefly on brand-new paths after push. Object keys include a content hash so overwrites get new URLs.
@@ -178,15 +187,16 @@ jsDelivr may lag briefly on brand-new paths after push. Object keys include a co
 | `SOURCARDS_MEDIA_S3_SECRET_ACCESS_KEY` | Secret |
 | `SOURCARDS_MEDIA_S3_REGION` | Default `auto` (R2) |
 | **http / command** | |
-| `SOURCARDS_MEDIA_UPLOAD_URL` | http provider POST target (your gateway — required for `http`) |
+| `SOURCARDS_MEDIA_UPLOAD_URL` | http POST target. Unset + `FLASHCARD_API_KEY` → official `/api/media` |
 | `SOURCARDS_MEDIA_UPLOAD_TOKEN` | Optional Bearer token for your gateway |
 | `SOURCARDS_MEDIA_HTTP_BASE_URL` | Public origin if response has no `url` |
 | `SOURCARDS_MEDIA_UPLOAD_CMD` | Shell command for `command` provider |
 | `SOURCARDS_MEDIA_MAX_IMAGE_BYTES` | Default 8 MiB |
 | `SOURCARDS_MEDIA_MAX_AUDIO_BYTES` | Default 20 MiB |
 
-**The `http` provider uses your configured upload URL/token** — never a
-hard-coded official endpoint. GitHub/S3 BYO use their own env vars, not that token.
+**Official http target** is `https://sourcard.sourmonkey.xyz/api/media` with
+`FLASHCARD_API_KEY`, unless `SOURCARDS_MEDIA_UPLOAD_URL` or a BYO provider is set.
+GitHub/S3 keep their own env vars.
 
 ### Object keys
 
@@ -269,7 +279,7 @@ upload-media.mjs [cards.json] [--out file|-] [--config file] [--provider name]
 | Review: broken image / silent audio | Non-https or dead URL; re-lint for local srcs |
 | 403 from CDN | Hotlink protection / private bucket — allow public GET or open CORS if you later canvas-read |
 | Wrong player type | Missing/incorrect `Content-Type` on upload |
-| `no provider configured` | Set `SOURCARDS_MEDIA_*` or use `--provider map` |
+| `no provider configured` | No `FLASHCARD_API_KEY` and no BYO host. Run `login.mjs --check`, or `--provider github`. If the JSON has no local media, skip `upload-media` |
 
 ## Non-goals
 

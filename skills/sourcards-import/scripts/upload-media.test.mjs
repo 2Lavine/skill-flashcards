@@ -37,6 +37,10 @@ function run(args, { input, env = {} } = {}) {
     env: {
       ...process.env,
       SOURCARDS_MEDIA_SKIP_ENV_FILE: '1',
+      // Never inherit a real token — that selects official /api/media.
+      FLASHCARD_API_KEY: '',
+      SOURCARDS_API_BASE_URL: '',
+      FLASHCARD_API_BASE: '',
       ...env,
     },
   });
@@ -49,6 +53,9 @@ function runAsync(args, { input, env = {} } = {}) {
       env: {
         ...process.env,
         SOURCARDS_MEDIA_SKIP_ENV_FILE: '1',
+        FLASHCARD_API_KEY: '',
+        SOURCARDS_API_BASE_URL: '',
+        FLASHCARD_API_BASE: '',
         ...env,
       },
     });
@@ -263,6 +270,41 @@ test('local media without provider → exit 1', () => {
     });
     assert.equal(code, 1);
     assert.match(combined, /no provider configured/);
+    assert.match(combined, /login\.mjs --check/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('FLASHCARD_API_KEY selects official /api/media without a custom gateway', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'sc-media-'));
+  try {
+    writeFileSync(join(dir, 'x.mp3'), 'x');
+    const payload = {
+      deck: '日语',
+      cards: [{ question: '<audio src="./x.mp3" controls></audio>', answer: 'a' }],
+    };
+    const { code, combined } = run(['--root', dir], {
+      input: payload,
+      env: {
+        SOURCARDS_MEDIA_SKIP_ENV_FILE: '1',
+        SOURCARDS_MEDIA_PROVIDER: '',
+        SOURCARDS_MEDIA_S3_ENDPOINT: '',
+        SOURCARDS_MEDIA_S3_BUCKET: '',
+        SOURCARDS_MEDIA_S3_ACCESS_KEY_ID: '',
+        SOURCARDS_MEDIA_S3_SECRET_ACCESS_KEY: '',
+        SOURCARDS_MEDIA_REPO_DIR: '',
+        SOURCARDS_MEDIA_UPLOAD_URL: '',
+        SOURCARDS_MEDIA_UPLOAD_CMD: '',
+        SOURCARDS_MEDIA_UPLOAD_TOKEN: '',
+        SOURCARDS_API_BASE_URL: 'http://127.0.0.1:9',
+        FLASHCARD_API_BASE: '',
+        FLASHCARD_API_KEY: 'sc_int_test',
+      },
+    });
+    assert.equal(code, 1);
+    assert.match(combined, /provider: http http:\/\/127\.0\.0\.1:9\/api\/media/);
+    assert.doesNotMatch(combined, /no provider configured/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -404,7 +446,7 @@ test('config file supplies http endpoint (no env needed)', async () => {
   }
 });
 
-test('http without configured endpoint → exit 1 (no hard-coded URL)', () => {
+test('http without key or upload URL → exit 1', () => {
   const dir = mkdtempSync(join(tmpdir(), 'sc-media-'));
   try {
     writeFileSync(join(dir, 'x.mp3'), 'x');
@@ -418,11 +460,12 @@ test('http without configured endpoint → exit 1 (no hard-coded URL)', () => {
         env: {
           SOURCARDS_MEDIA_UPLOAD_URL: '',
           SOURCARDS_MEDIA_UPLOAD_TOKEN: '',
+          FLASHCARD_API_KEY: '',
         },
       },
     );
-    assert.equal(code, 1);
-    assert.match(combined, /requires an upload endpoint/);
+    assert.equal(code, 1, combined);
+    assert.match(combined, /no upload endpoint/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

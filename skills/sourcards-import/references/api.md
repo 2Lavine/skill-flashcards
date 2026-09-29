@@ -67,9 +67,12 @@ existing key wins; files never override an already-set env var):
 2. This skill folder's `.env.local` then `.env` (personal overlay)
 3. Walk-up `.env.local` / `.env` from the working directory and the script
 
-If still missing, prefer browser login (no copy):
+If still missing, check and log in with this skill's `login.mjs` only.
+`save-token.mjs --check` is the wrong command: it exits 2 and prints the
+`login.mjs` line. Do not treat that exit as "no token".
 
 ```bash
+node scripts/login.mjs --check
 node scripts/login.mjs
 ```
 
@@ -100,27 +103,22 @@ x-api-key: $FLASHCARD_API_KEY
 Import is **JSON only** — no multipart/binary media. Embed images and audio as
 absolute `https://` URLs inside each card's `question` / `answer` markdown.
 
-### Media upload — bring your own gateway
+### Media upload
 
-The `upload-media` skill uploads to **your configured endpoint** (no hard-coded
-official URL). The platform's own `/api/media` is maintainer-only and not
-available to regular users — host media on your own CDN instead.
-
-Configure the `http` provider via `media.config.json` (see
-[media.md](media.md) → `media.config.json` section) or
-`SOURCARDS_MEDIA_UPLOAD_URL` / `SOURCARDS_MEDIA_UPLOAD_TOKEN`.
+Default: `upload-media` POSTs to the official route with the same token when
+no BYO host is configured. Lite / Lifetime. Free gets 403 — use
+`--provider github`. A custom gateway (`SOURCARDS_MEDIA_UPLOAD_URL` or
+`media.config.json`) replaces the official URL. See [media.md](media.md).
 
 ```
-POST {your-configured-upload-url}
+POST https://sourcard.sourmonkey.xyz/api/media
 Content-Type: multipart/form-data
-x-api-key: $SOURCARDS_MEDIA_UPLOAD_TOKEN
-# field: file, key, contentType
+x-api-key: $FLASHCARD_API_KEY
+# field: file, contentType
 ```
 
-- Response: `{ "ok": true, "url": "https://…" }` (or the script builds the URL
-  from `SOURCARDS_MEDIA_HTTP_BASE_URL`).
-- Default auto-detect: `http` when an upload URL/token is configured; otherwise
-  `github` / `s3` BYO — see [media.md](media.md).
+- Response: `{ "ok": true, "url": "https://…" }`.
+- Skip `upload-media` when the JSON has no local/relative media.
 
 ## Request Body
 

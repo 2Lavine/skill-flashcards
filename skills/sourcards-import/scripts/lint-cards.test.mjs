@@ -284,8 +284,9 @@ test('catalog: existing deck+category reused, drift + new flagged', async () => 
   ));
   assert.equal(code, 0);
   assert.match(out, /deck "数学" — same as an existing deck/);
-  assert.match(out, /概率轮.*looks like existing "概率论"/);
-  assert.match(out, /拓扑学.*NEW \(no existing/);
+  assert.match(out, /CATALOG-DRIFT category "概率轮" looks like existing "概率论"/);
+  assert.match(out, /CATALOG-NEW category "拓扑学"/);
+  assert.match(out, /not a failure/);
   assert.match(out, /naming rules for any NEW/);        // rules printed when new exists
 });
 
@@ -295,7 +296,18 @@ test('catalog: deck typo drift flagged (心里学 ~ 心理学)', async () => {
     ['--catalog', base],
     { FLASHCARD_API_KEY: 'testkey' },
   ));
-  assert.match(out, /deck "心里学" — NEW, but looks like existing "心理学"/);
+  assert.match(out, /CATALOG-DRIFT deck "心里学" looks like existing "心理学"/);
+});
+
+test('catalog: 心理咨询 is not drift against 心理学', async () => {
+  const { code, out } = await withCatalog((base) => lintAsync(
+    { deck: '心理咨询', cards: [{ question: 'q', answer: 'a', category: '概率论' }] },
+    ['--catalog', base],
+    { FLASHCARD_API_KEY: 'testkey' },
+  ));
+  assert.equal(code, 0);
+  assert.match(out, /CATALOG-NEW deck "心理咨询"/);
+  assert.doesNotMatch(out, /CATALOG-DRIFT deck "心理咨询"/);
 });
 
 test('catalog: all-existing → no naming-rule spam', async () => {

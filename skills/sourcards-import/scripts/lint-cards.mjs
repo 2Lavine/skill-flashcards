@@ -283,10 +283,11 @@ data.cards.forEach((c, idx) => {
 });
 
 // ---- 6. reference: cross-check deck/category against existing catalog -----
-// INFO only — never touches the exit code. Fetch failures degrade silently to
-// one note. The value is handing the model a reference, not a verdict: a NEW
-// category next to a near-existing one prompts a re-confirm (real new field vs.
-// naming drift), rather than silently minting "对策论" when "博弈论" exists.
+// Never changes the exit code by itself. Two different lines:
+//   CATALOG-DRIFT (warning) — spelling of a name that already exists. Resolve
+//     before import. Do not treat it as a hard error, and do not ignore it.
+//   CATALOG-NEW (info) — nothing similar exists. Allowed. Do not block on it.
+// Fetch failures degrade to one note.
 if (catalogBase && parsed && data.deck) {
   await catalogCrossCheck(catalogBase.replace(/\/+$/, ''));
 }
@@ -340,9 +341,11 @@ async function catalogCrossCheck(base) {
     } else {
       anyNew = true;
       const near = nearMatches(deck, decks);
-      info(near.length
-        ? `deck "${deck}" — NEW, but looks like existing "${near.join('" / "')}". Same discipline? If yes, use the existing name.`
-        : `deck "${deck}" — NEW (no existing deck matches).`);
+      if (near.length) {
+        warn(`CATALOG-DRIFT deck "${deck}" looks like existing "${near.join('" / "')}". Reuse the existing name, or ask the user before keeping this one. Not a lint error (exit stays 0); do not import until this is resolved.`);
+      } else {
+        info(`CATALOG-NEW deck "${deck}" matches nothing existing. A new deck is allowed. This line is not a failure; do not block import on it.`);
+      }
     }
   }
 
@@ -355,9 +358,11 @@ async function catalogCrossCheck(base) {
   for (const f of fresh) {
     anyNew = true;
     const near = nearMatches(f, categories);
-    info(near.length
-      ? `category "${f}" — NEW, but looks like existing "${near.join('" / "')}". Same sub-field? If yes, use the existing name.`
-      : `category "${f}" — NEW (no existing category matches).`);
+    if (near.length) {
+      warn(`CATALOG-DRIFT category "${f}" looks like existing "${near.join('" / "')}". Reuse the existing name, or ask the user before keeping this one. Not a lint error (exit stays 0); do not import until this is resolved.`);
+    } else {
+      info(`CATALOG-NEW category "${f}" matches nothing existing. A new category is allowed. This line is not a failure; do not block import on it.`);
+    }
   }
 
   // Remind the naming rules only when something new is actually being created,
@@ -391,7 +396,12 @@ function report() {
     for (const m of infos) console.log(`  ℹ ${m}`);
   }
   if (!errors.length) {
-    const tail = warnings.length ? 'warnings only, import will succeed' : 'clean, safe to import';
+    const drift = warnings.some((w) => w.startsWith('CATALOG-DRIFT'));
+    const tail = drift
+      ? 'CATALOG-DRIFT must be resolved or confirmed by the user before import'
+      : warnings.length
+        ? 'warnings only, import will succeed'
+        : 'clean, safe to import';
     console.log(`\n(${n} card(s) — ${tail}.)`);
   }
 }

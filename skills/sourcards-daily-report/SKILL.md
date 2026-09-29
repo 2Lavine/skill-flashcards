@@ -45,17 +45,20 @@ Do **not** reload everything every time. Open only what the current step needs:
    this skill folder's `.env.local` / `.env` (copy [`.env.example`](.env.example)).
    If still missing, run sibling `../sourcards-import/scripts/login.mjs` (or
    paste a token). Do not print the value.
-2. **Fetch.** Default report covers the last 7 days:
+2. **Fetch.** Default report covers the last 7 days. `SKILL_ROOT` is the
+   directory of this SKILL.md (same nearest-copy search as sourcards-import,
+   with name `sourcards-daily-report` and marker `scripts/fetch-daily-report.mjs`).
+   Do not guess `.agents` / `.claude` / `skills/` layouts.
 
    ```bash
-   node skills/sourcards-daily-report/scripts/fetch-daily-report.mjs
-   node skills/sourcards-daily-report/scripts/fetch-daily-report.mjs --days 30
+   node "$SKILL_ROOT/scripts/fetch-daily-report.mjs"
+   node "$SKILL_ROOT/scripts/fetch-daily-report.mjs" --days 30
    ```
 
 3. **Cron / pipeline reuse** — raw JSON with `stats` / `dailyCounts` / `streak`:
 
    ```bash
-   node skills/sourcards-daily-report/scripts/fetch-daily-report.mjs --days 7 --json
+   node "$SKILL_ROOT/scripts/fetch-daily-report.mjs" --days 7 --json
    ```
 
    A scheduled job can run this daily, persist the JSON, and summarize trends
