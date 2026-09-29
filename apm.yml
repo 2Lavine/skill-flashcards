@@ -1,0 +1,7 @@
+name: skill-flashcards
+version: "0.2.3"
+description: SourCards agent skills for flashcard import, library lint, and daily review reports.
+author: SourCards
+license: MIT
+type: skill
+includes: auto

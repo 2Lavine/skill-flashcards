@@ -1,0 +1,14 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "groupings": [
+    {
+      "title": "SourCards",
+      "description": "Formulate, import, lint, and report on SourCards libraries.",
+      "skills": [
+        "sourcards-import",
+        "sourcards-library-lint",
+        "sourcards-daily-report"
+      ]
+    }
+  ]
+}

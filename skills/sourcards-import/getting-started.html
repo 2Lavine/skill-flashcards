@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>sourcards-import · 新手指南</title>
+<meta name="description" content="把 sourcards-import 装进 agent，浏览器授权后制卡、校验并导入 SourCards。" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-family: "Geist", system-ui, -apple-system, sans-serif; }
+body { min-height: 100dvh; overflow-x: hidden; color: var(--foreground); }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+p { text-wrap: pretty; }
+h1, h2, h3 { text-wrap: balance; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; }
+:focus-visible { outline: 2px solid oklch(0.150 0.010 250); outline-offset: 2px; }
+::selection { background: oklch(0.920 0.008 250); color: oklch(0.150 0.010 250); }
+
+:root {
+  --gray-50:  oklch(0.993 0.002 250);
+  --gray-100: oklch(0.980 0.004 250);
+  --gray-200: oklch(0.955 0.006 250);
+  --gray-300: oklch(0.920 0.008 250);
+  --gray-500: oklch(0.480 0.014 250);
+  --gray-900: oklch(0.150 0.010 250);
+  --foreground: var(--gray-900);
+  --muted-fg: var(--gray-500);
+  --success: oklch(0.650 0.170 155);
+  --glass-border: rgba(255,255,255,0.35);
+  --glass-fill: rgba(255,255,255,0.55);
+  --glass-fill-interactive: rgba(255,255,255,0.70);
+  --glass-fill-hover: rgba(255,255,255,0.88);
+  --shadow-glass-sm: 0 2px 8px rgba(0,0,0,0.03), 0 0 0 0.5px rgba(255,255,255,0.45) inset;
+  --shadow-glass-md: 0 4px 16px rgba(0,0,0,0.05), 0 0 0 0.5px rgba(255,255,255,0.45) inset;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.125rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-press: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 150ms;
+}
+
+.app-gradient {
+  background:
+    radial-gradient(ellipse at 15% 5%, oklch(0.965 0.012 40) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 90%, oklch(0.955 0.012 260) 0%, transparent 55%),
+    var(--gray-100);
+}
+
+.wrap { width: 100%; max-width: 720px; margin-inline: auto; padding-inline: clamp(1.25rem, 5vw, 2rem); }
+
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(248,248,249,0.75);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+.nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; height: 52px; }
+.nav-brand { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.nav-logo {
+  width: 26px; height: 26px; border-radius: 7px; overflow: hidden; flex-shrink: 0;
+  border: 1px solid var(--glass-border); box-shadow: var(--shadow-glass-sm);
+}
+.nav-logo svg { display: block; width: 100%; height: 100%; }
+.nav-name { font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.02em; }
+.nav-sub { font-size: 0.75rem; color: var(--muted-fg); font-weight: 500; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 600; transition: transform var(--dur-fast) var(--ease-press),
+    background var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+.btn:active { transform: scale(0.96); }
+.btn-primary {
+  padding: 0.5rem 1.125rem; border-radius: var(--radius-lg);
+  background: var(--foreground); color: var(--gray-50); font-size: 0.875rem;
+  box-shadow: var(--shadow-glass-sm);
+}
+.btn-primary:hover { opacity: 0.88; }
+.btn-copy {
+  padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500;
+  color: var(--muted-fg);
+}
+.btn-copy:hover { color: var(--foreground); background: var(--glass-fill-hover); }
+.btn-copy[data-copied="1"] { color: var(--success); }
+
+.hero { padding-block: clamp(2.75rem, 7vw, 4.5rem) 2rem; }
+.hero h1 {
+  font-size: clamp(1.75rem, 4.2vw, 2.5rem); font-weight: 700;
+  line-height: 1.12; letter-spacing: -0.03em; margin-bottom: 0.875rem;
+}
+.hero p { font-size: 1rem; color: var(--muted-fg); line-height: 1.7; max-width: 38rem; }
+.hero a, .step a, .faq a, .note a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--gray-300);
+}
+.hero a:hover, .step a:hover, .faq a:hover { text-decoration-color: var(--foreground); }
+
+.toc {
+  display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem;
+  padding-block: 1rem 0; margin-bottom: 0.5rem;
+  border-top: 1px solid var(--glass-border);
+}
+.toc a { font-size: 0.8125rem; font-weight: 500; color: var(--muted-fg); }
+.toc a:hover { color: var(--foreground); }
+
+.step { padding-block: 2.25rem; border-top: 1px solid var(--glass-border); }
+.step-k {
+  font-variant-numeric: tabular-nums; font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.04em; color: var(--muted-fg); margin-bottom: 0.5rem;
+}
+.step h2 {
+  font-size: 1.25rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 0.625rem;
+}
+.step > p, .note { font-size: 0.9375rem; color: var(--muted-fg); line-height: 1.7; margin-bottom: 1rem; }
+
+.shell {
+  border-radius: var(--radius-xl); border: 1px solid var(--glass-border);
+  background: var(--glass-fill); box-shadow: var(--shadow-glass-sm);
+  backdrop-filter: blur(12px) saturate(180%);
+  overflow: hidden; margin-bottom: 1rem;
+}
+.shell-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-bottom: 1px solid var(--glass-border);
+  font-size: 0.75rem; font-weight: 500; color: var(--muted-fg);
+}
+.shell pre {
+  padding: 0.875rem 1rem 1rem; overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem; line-height: 1.6;
+}
+
+.auth {
+  border-radius: var(--radius-xl); border: 1px solid var(--glass-border);
+  background: var(--glass-fill); box-shadow: var(--shadow-glass-md);
+  backdrop-filter: blur(16px) saturate(180%);
+  padding: 1.25rem 1.375rem 1.375rem; margin-bottom: 1rem; max-width: 22rem;
+}
+.auth-cap { font-size: 0.75rem; font-weight: 500; color: var(--muted-fg); text-align: center; }
+.auth-code {
+  margin-top: 0.5rem; text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.75rem; font-weight: 600; letter-spacing: 0.18em;
+}
+.auth-list { margin: 1rem 0 0; padding-left: 1.1rem; font-size: 0.8125rem; color: var(--muted-fg); line-height: 1.65; }
+
+ol.plain, ul.plain { margin: 0 0 1rem 1.15rem; color: var(--muted-fg); font-size: 0.9375rem; line-height: 1.7; }
+ol.plain li + li, ul.plain li + li { margin-top: 0.35rem; }
+.plain strong { color: var(--foreground); font-weight: 600; }
+
+.faq { padding-block: 2.25rem; border-top: 1px solid var(--glass-border); }
+.faq h2 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 0.75rem; }
+.faq-item { border-bottom: 1px solid var(--glass-border); }
+.faq-item summary {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: 1rem 0; cursor: pointer; list-style: none;
+  font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item p { padding-bottom: 1rem; font-size: 0.9rem; color: var(--muted-fg); line-height: 1.7; }
+.chev { color: var(--muted-fg); flex-shrink: 0; transition: transform 200ms var(--ease-out); }
+details[open] .chev { transform: rotate(90deg); color: var(--foreground); }
+
+.footer {
+  border-top: 1px solid var(--glass-border); padding-block: 1.75rem 2.25rem;
+  display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem;
+  justify-content: space-between; align-items: center;
+  font-size: 0.8125rem; color: var(--muted-fg);
+}
+.footer a:hover { color: var(--foreground); }
+
+@media (max-width: 520px) {
+  .nav-sub { display: none; }
+  .auth-code { font-size: 1.375rem; letter-spacing: 0.12em; }
+  .shell pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn, .chev { transition: none; }
+}
+</style>
+</head>
+<body class="app-gradient">
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a class="nav-brand" href="https://sourcard.sourmonkey.xyz" aria-label="SourCards">
+      <span class="nav-logo" aria-hidden="true">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <rect width="512" height="512" rx="112" fill="#141518"/>
+          <rect x="151" y="168" width="210" height="150" rx="24" fill="#FFFFFF" fill-opacity="0.25" transform="rotate(-7 256 256)"/>
+          <rect x="151" y="192" width="210" height="150" rx="24" fill="#FFFFFF"/>
+          <rect x="179" y="224" width="100" height="16" rx="8" fill="#141518"/>
+          <rect x="179" y="256" width="150" height="11" rx="5.5" fill="#C7C9CF"/>
+          <rect x="179" y="280" width="112" height="11" rx="5.5" fill="#C7C9CF"/>
+        </svg>
+      </span>
+      <span>
+        <span class="nav-name">sourcards-import</span>
+        <span class="nav-sub"> · 新手指南</span>
+      </span>
+    </a>
+    <a class="btn btn-primary" href="https://github.com/2Lavine/skill-flashcards">仓库</a>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="hero">
+    <h1>把学习材料变成可导入的 SourCards</h1>
+    <p>这是 <code>sourcards-import</code> 的人读说明。Agent 走 <code>SKILL.md</code>。你把技能装进 agent，浏览器授权一次，然后把笔记丢给它。</p>
+    <nav class="toc" aria-label="本页目录">
+      <a href="#install">1. 安装</a>
+      <a href="#login">2. 登录</a>
+      <a href="#cards">3. 制卡</a>
+      <a href="#import">4. 导入</a>
+    </nav>
+  </header>
+
+  <section class="step" id="install">
+    <p class="step-k">01</p>
+    <h2>把技能装进你的 agent</h2>
+    <p>公开仓是 <a href="https://github.com/2Lavine/skill-flashcards"><code>2Lavine/skill-flashcards</code></a>。布局是 <code>skills/&lt;name&gt;/SKILL.md</code>，<a href="https://skills.sh">skills.sh</a> 的 CLI 按这个约定扫 GitHub 仓，不用另注册。</p>
+    <div class="shell">
+      <div class="shell-bar">
+        <span>skills.sh</span>
+        <button type="button" class="btn btn-copy" data-copy="npx skills add 2Lavine/skill-flashcards">复制</button>
+      </div>
+      <pre><code>npx skills add 2Lavine/skill-flashcards
+npx skills add 2Lavine/skill-flashcards --skill sourcards-import</code></pre>
+    </div>
+    <div class="shell">
+      <div class="shell-bar">
+        <span>APM</span>
+        <button type="button" class="btn btn-copy" data-copy="apm install 2Lavine/skill-flashcards">复制</button>
+      </div>
+      <pre><code>apm install 2Lavine/skill-flashcards</code></pre>
+    </div>
+    <ul class="plain">
+      <li><strong>Codex plugin：</strong>把仓库根目录（含 <code>.codex-plugin/plugin.json</code>）装成插件。</li>
+      <li><strong>复制目录：</strong>把 <code>skills/sourcards-import</code> 放到 <code>.agents/skills/</code> 或 <code>.claude/skills/</code>。</li>
+      <li><strong>校验：</strong>在仓库根执行 <code>npm test</code>。制卡规则在 <code>SKILL.md</code>，人不用背。</li>
+    </ul>
+  </section>
+
+  <section class="step" id="login">
+    <p class="step-k">02</p>
+    <h2>浏览器授权，不要复制令牌</h2>
+    <p>导入、目录交叉校验、回滚都要 Personal Integration Token。让 agent 跑登录脚本；浏览器打开授权页，核对这些字符，点授权。脚本写入 gitignored 的 <code>.env.local</code>，终端不会打印 <code>sc_int_…</code>。</p>
+    <div class="shell">
+      <div class="shell-bar">
+        <span>login.mjs</span>
+        <button type="button" class="btn btn-copy" data-copy="node skills/sourcards-import/scripts/login.mjs">复制</button>
+      </div>
+      <pre><code>node skills/sourcards-import/scripts/login.mjs</code></pre>
+    </div>
+    <div class="auth" aria-label="授权码示意">
+      <p class="auth-cap">在浏览器里核对这些字符</p>
+      <p class="auth-code">K7M2-Q9XW</p>
+      <ul class="auth-list">
+        <li>导入 / 列出批次 / 回滚</li>
+        <li>读牌组与分类名（不含卡片正文）</li>
+        <li>聚合复习统计</li>
+      </ul>
+    </div>
+    <ol class="plain">
+      <li>终端出现 user code；浏览器应打开 <code>/cli/authorize</code>。</li>
+      <li>未登录就先登录 SourCards，确认代码一致后点授权。</li>
+      <li>看到 <code>saved FLASHCARD_API_KEY to …/.env.local</code> 即完成。不要 <code>cat</code> 这个文件。</li>
+    </ol>
+    <p class="note">浏览器打不开时加 <code>--no-open</code>，把打印出的 URL 贴进浏览器。拒绝浏览器登录时，到 App「设置 → 集成 → Personal Integration Tokens」创建一次令牌，再用 <code>save-token.mjs</code> 写入。</p>
+  </section>
+
+  <section class="step" id="cards">
+    <p class="step-k">03</p>
+    <h2>把材料交给 agent，先 lint 再导入</h2>
+    <p>对 agent 说「用 sourcards-import 把这篇笔记制成卡片」。它按效用优先出卡，写出 JSON，再跑 lint。示例模板：仓库里的 <code>examples/cards.json</code>。</p>
+    <div class="shell">
+      <div class="shell-bar">
+        <span>lint-cards.mjs</span>
+        <button type="button" class="btn btn-copy" data-copy="node skills/sourcards-import/scripts/lint-cards.mjs examples/cards.json">复制</button>
+      </div>
+      <pre><code>node skills/sourcards-import/scripts/lint-cards.mjs examples/cards.json</code></pre>
+    </div>
+    <ul class="plain">
+      <li>退出码 1：JSON 或必填字段坏了，修好再导入。</li>
+      <li>退出码 0 带警告：分类带 <code>/</code>、缺 <code>alias:</code> 这类质量漂移，尽量先改。</li>
+      <li>退出码 0 且干净：可以导入。加 <code>--catalog https://sourcard.sourmonkey.xyz</code> 会用你的牌库交叉核对（需要 token）。</li>
+    </ul>
+  </section>
+
+  <section class="step" id="import">
+    <p class="step-k">04</p>
+    <h2>导入一批；导错了就回滚这批</h2>
+    <p>Agent 用已保存的 <code>FLASHCARD_API_KEY</code> 调 <code>POST /api/import</code>。单次最多 200 张。响应里的 <code>importId</code> 用来整批撤销。</p>
+    <div class="shell">
+      <div class="shell-bar">
+        <span>POST /api/import</span>
+        <button type="button" class="btn btn-copy" data-copy="curl -s -X POST https://sourcard.sourmonkey.xyz/api/import -H 'Content-Type: application/json' -H &quot;x-api-key: $FLASHCARD_API_KEY&quot; -d @examples/cards.json">复制</button>
+      </div>
+      <pre><code>curl -s -X POST https://sourcard.sourmonkey.xyz/api/import \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: $FLASHCARD_API_KEY" \
+  -d @examples/cards.json</code></pre>
+    </div>
+    <div class="shell">
+      <div class="shell-bar">
+        <span>rollback</span>
+        <button type="button" class="btn btn-copy" data-copy="curl -s -X POST https://sourcard.sourmonkey.xyz/api/imports/IMPORT_ID/rollback -H &quot;x-api-key: $FLASHCARD_API_KEY&quot;">复制</button>
+      </div>
+      <pre><code>curl -s -X POST https://sourcard.sourmonkey.xyz/api/imports/IMPORT_ID/rollback \
+  -H "x-api-key: $FLASHCARD_API_KEY"</code></pre>
+    </div>
+    <p class="note">找不到 <code>importId</code> 时：<code>GET /api/imports</code>，按时间或 <code>sourceUri</code> 过滤。令牌读不到卡片正文。没 token 时让 agent 把 JSON 交你在 App 里手动导入。</p>
+  </section>
+
+  <section class="faq" id="faq">
+    <h2>还要知道的</h2>
+    <details class="faq-item">
+      <summary>这个技能能访问我的复习记录吗？
+        <svg class="chev" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>
+      </summary>
+      <p>不能。令牌只有导入、列出/回滚批次、读牌组分类名、聚合统计。没有卡片正文、原始复习日志、Coach、设置或账户。</p>
+    </details>
+    <details class="faq-item">
+      <summary>skills.sh 和 APM 装的是同一套东西吗？
+        <svg class="chev" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>
+      </summary>
+      <p>是。公开仓里的三份技能：<code>sourcards-import</code>、<code>sourcards-library-lint</code>、<code>sourcards-daily-report</code>。<code>npx skills add</code> 按 Git 目录约定安装；<code>apm install</code> 读根上的 <code>apm.yml</code>，把同一份目录落到当前 agent 的 skills 路径。已经在用 APM 的项目用 APM；其他环境用 skills.sh。两者都不替代这个公开仓。</p>
+    </details>
+    <details class="faq-item">
+      <summary>登录脚本已经提示 key is set，还要再跑吗？
+        <svg class="chev" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>
+      </summary>
+      <p>不用。环境变量或技能目录 <code>.env.local</code> 里已有 key 时，<code>login.mjs</code> 直接退出。换账号或令牌失效再 <code>--force</code>。</p>
+    </details>
+  </section>
+
+  <footer class="footer">
+    <span>人读这一页。Agent 读 SKILL.md。</span>
+    <a href="https://sourcard.sourmonkey.xyz">打开 SourCards</a>
+  </footer>
+</main>
+
+<script>
+document.querySelectorAll("[data-copy]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const text = btn.getAttribute("data-copy") || "";
+    try { await navigator.clipboard.writeText(text); }
+    catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    btn.dataset.copied = "1";
+    const prev = btn.textContent;
+    btn.textContent = "已复制";
+    setTimeout(() => { btn.dataset.copied = "0"; btn.textContent = prev; }, 1200);
+  });
+});
+</script>
+</body>
+</html>

@@ -3,6 +3,8 @@
 把学习材料变成 FSRS 间隔复习卡片的**外部 agent 技能包**（Codex plugin / multi-skill pack）。
 制卡、校验、导入、回滚——全部通过开放 API，不依赖 App 内 Coach。
 
+人读新手页（浏览器打开，Agent 不用读）：[`skills/sourcards-import/getting-started.html`](skills/sourcards-import/getting-started.html)
+
 - 插件名：**`skill-flashcards`**；npm 包（可选）：**`@sourcards/skill-flashcards`**
 - 主技能：**`sourcards-import`**（原 `sourcards-flashcards`）
 - 辅助技能：**`sourcards-library-lint`**
@@ -118,7 +120,28 @@ map 文件或 shell 命令）见 [media.md](skills/sourcards-import/references/m
 
 ## 安装
 
-### Codex plugin（多技能首选）
+公开仓布局是 `skills/<name>/SKILL.md`。skills.sh 按这个约定扫 GitHub，不用另注册。
+
+### skills.sh（默认）
+
+```bash
+npx skills add 2Lavine/skill-flashcards
+npx skills add 2Lavine/skill-flashcards --skill sourcards-import
+```
+
+可选展示分组：根目录 [`skills.sh.json`](skills.sh.json) 只影响 skills.sh 仓库页，不改安装内容。
+
+### APM
+
+已经在用 APM 的项目：
+
+```bash
+apm install 2Lavine/skill-flashcards
+```
+
+会把三份技能落到当前 target 的 skills 目录（例如 `.claude/skills/`）。钉版本用 `#v0.2.3` 这类 tag。
+
+### Codex plugin
 
 把本仓库根目录（含 `.codex-plugin/plugin.json`）作为本地/个人插件或 marketplace 安装：
 
@@ -159,6 +182,8 @@ sourcards-upload-media cards.json --out cards.json
 ## 仓库结构
 
 ```text
+apm.yml                        # APM 技能包清单
+skills.sh.json                 # skills.sh 仓库页分组（可选）
 .codex-plugin/plugin.json      # Codex plugin 清单
 lib/                           # npm 共享核心（org-lint / catalog-name / card-media-md）
 skills/
