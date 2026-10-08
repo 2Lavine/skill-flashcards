@@ -139,6 +139,7 @@ test('type:vocab and type:listening are known genre tags when used alone', () =>
       answer: '猫（ねこ）',
       tags: ['lang:ja', 'type:vocab', 'alias:猫'],
       category: '名词',
+      importanceScore: 7,
     }],
   });
   assert.equal(vocab.code, 0);
@@ -153,6 +154,7 @@ test('type:vocab and type:listening are known genre tags when used alone', () =>
       answer: '猫（ねこ）',
       tags: ['lang:ja', 'type:listening', 'alias:猫'],
       category: '听解',
+      importanceScore: 6,
     }],
   });
   assert.equal(listening.code, 0);
@@ -261,10 +263,30 @@ test('clean payload → exit 0, single clean line', () => {
   const { code, out } = lint({
     deck: '数学',
     source: 'https://ex.com',
-    cards: [{ question: 'What is X?', answer: 'y', tags: ['type:concept', 'alias:X'], category: '算法' }],
+    cards: [{ question: 'What is X?', answer: 'y', tags: ['type:concept', 'alias:X'], category: '算法', importanceScore: 8 }],
   });
   assert.equal(code, 0);
   assert.match(out, /lint clean/);
+});
+
+test('importanceScore: missing / out-of-range / fractional / non-numeric all warn but still exit 0', () => {
+  const { code, out } = lint({
+    deck: '数学',
+    cards: [
+      { question: 'q1', answer: 'a1', importanceScore: 7 },      // fine
+      { question: 'q2', answer: 'a2' },                           // missing
+      { question: 'q3', answer: 'a3', importanceScore: 99 },      // out of range
+      { question: 'q4', answer: 'a4', importanceScore: 7.6 },     // fractional
+      { question: 'q5', answer: 'a5', importanceScore: 'high' },  // non-numeric
+    ],
+  });
+  // A bad score is an annotation problem, never an import blocker.
+  assert.equal(code, 0);
+  assert.match(out, /card\[1\]: no importanceScore/);
+  assert.match(out, /card\[2\]: importanceScore 99 is outside 0-10/);
+  assert.match(out, /card\[3\]: importanceScore 7\.6 is fractional/);
+  assert.match(out, /card\[4\]: importanceScore "high" is not a number/);
+  assert.doesNotMatch(out, /card\[0\]/);
 });
 
 // ---- catalog cross-check ---------------------------------------------------

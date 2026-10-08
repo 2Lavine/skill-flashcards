@@ -33,6 +33,7 @@
 | `cards[].category` | No | Second-level discipline under the deck — single Chinese name, **no `/`**. |
 | `cards[].source_quote` | No | Exact supporting sentence from the source. Shown under a revealed card. |
 | `cards[].studyOrder` | No | Optional 0-based reading order within the batch. Defaults to the card's array position; prefer array order over manual numbers. |
+| `cards[].importanceScore` | No | Integer **0–10**: how much reviewing this card is worth (utility, not prose quality). Rendered as 0–5 stars (half-star per point) in the Review footer. Absent/unusable = unscored and the stars are hidden. Fractional or out-of-range values are rounded and clamped on import, never rejected. |
 
 The app preserves card array order as `studyOrder` — its single per-card review priority/reading order field. It derives hierarchy from `type:*` tags. Do not emit `reviewPriority` or `review_priority`.
 

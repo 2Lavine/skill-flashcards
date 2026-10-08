@@ -179,6 +179,23 @@ data.cards.forEach((c, idx) => {
     warn(`${tag}: legacy reviewPriority/review_priority is deprecated — keep cards in array order; the app stores that as studyOrder.`);
   }
 
+  // importanceScore: AI importance 0-10, rendered as 0-5 Review footer stars.
+  // Non-blocking — a bad score is normalized on import, never rejected.
+  if (c.importanceScore == null) {
+    warn(`${tag}: no importanceScore — Review will show no stars for this card. Score 0-10 by usable value (SKILL.md hard constraint 13).`);
+  } else {
+    const score = typeof c.importanceScore === 'number'
+      ? c.importanceScore
+      : Number(String(c.importanceScore).trim());
+    if (!Number.isFinite(score)) {
+      warn(`${tag}: importanceScore ${JSON.stringify(c.importanceScore)} is not a number — the import stores it as unscored.`);
+    } else if (score < 0 || score > 10) {
+      warn(`${tag}: importanceScore ${score} is outside 0-10 — the import clamps it into range.`);
+    } else if (!Number.isInteger(score)) {
+      warn(`${tag}: importanceScore ${score} is fractional — the import rounds it to ${Math.round(score)}.`);
+    }
+  }
+
   if (typeof c.question === 'string') scanCtrlChars(c.question, `${tag}.question`);
   if (typeof c.answer === 'string') scanCtrlChars(c.answer, `${tag}.answer`);
 

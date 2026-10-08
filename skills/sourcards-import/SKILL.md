@@ -54,6 +54,12 @@ These override density targets and examples:
 10. **Math in JSON:** wrap **every** formula in `$$...$$` — display only. The card renderer ignores single-dollar `$...$`, which shows up on cards as literal text (e.g. `$233$`). Every LaTeX `\` must be doubled (`\\frac`, `\\sigma`). Single backslashes break or corrupt `JSON.parse`.
 11. **Precision > recall; utility > coverage.** Prefer fewer *usable* cards over padded trivia or encyclopedic definitions. Never invent facts the source does not support.
 12. **No manual priority fields.** Card array order is the review priority/reading order. The app stores it as `studyOrder`; never emit `reviewPriority` or `review_priority`.
+13. **Importance score — `importanceScore`, integer 0–10.** Every card carries your judgement of how much reviewing *this* card is worth to the learner. Score the **utility gate**, not the prose quality:
+    - **8–10** — a load-bearing idea the learner must be able to *use*: a decision rule, the failure it prevents, a transferable pattern (the four cores at their best).
+    - **4–7** — useful supporting detail, context, or a narrower application.
+    - **1–3** — nice-to-know, or a fact whose use you cannot name.
+    - **0** — trivia you would cut if the user asked for fewer cards.
+    Spread the range honestly. If everything scores 8+, the number carries no information and the stars become noise. The app renders it as 0–5 stars (half-star per point) in the Review footer, and hides the stars entirely when the field is absent.
 
 ## Density control
 
@@ -128,7 +134,7 @@ Relax **only** when the user clearly wants short-term / exam coverage (`考试`,
 7. **Reconcile count** — if far outside target, re-check over/under-cardifying; never pad.
 8. **Set batch provenance** — `source` URI if known; `course` title if known; omit rather than invent.
 9. **Formulate cards** — situate the knowledge point (归属 / 处境 / 用例); Form A or B per fact; apply hard constraints; see quality-rules.md §13 when stuck.
-10. **Assign discipline & tags** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`.
+10. **Assign discipline, tags & importance** — batch `deck`; per-card `category` + topical tags + `type:*` + required `alias:*`, plus an integer `importanceScore` 0–10 (hard constraint 13).
 11. **Self-validate** — run the checklist below on every card.
 12. **Output JSON** — one valid JSON object (code block or file). Local media paths OK while drafting.
 13. **Resolve media** — if no card has a local/relative image or audio, skip `upload-media`. If one does, run `upload-media`: with `FLASHCARD_API_KEY` set and no BYO host, it POSTs to `https://sourcard.sourmonkey.xyz/api/media` (Lite/Lifetime; same token as import). `403` or a Free account: `--provider github`. A custom `SOURCARDS_MEDIA_UPLOAD_URL` still overrides. Do not invent a gateway. See [media.md](references/media.md).
@@ -163,6 +169,7 @@ Use when the material is too large for one generation pass **and** it has natura
 - [ ] LaTeX backslashes doubled for JSON?
 - [ ] No legacy `reviewPriority` / `review_priority` field; card array order expresses reading order?
 - [ ] Wording minimal; definitions include a concrete source case (`例如：` with actors/numbers) when useful?
+- [ ] **Importance scored:** every card has an integer `importanceScore` 0–10 that reflects usable value (four cores = high, trivia = low) — and the batch actually uses the range instead of clustering at 8+?
 - [ ] Media cards: if language study, `lang:<code>` + pick **one** of `type:vocab` / `type:listening` / `type:reading` (do not stack vocab+listening)?
 - [ ] Listening cards: question-side `<audio src>` present; prefer media-only / non-spoiler front?
 - [ ] Every media `src` is absolute `https://` (no `./`, `file://`, or bare disk paths) — run `upload-media` if not?

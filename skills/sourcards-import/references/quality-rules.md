@@ -21,6 +21,8 @@ Use when a fact is borderline, wording is bloated, or two concepts interfere.
 3. If a definition is truly the working unit, keep it short and attach a mini-use in the answer: `用途：…` / `例如：…`.
 4. **Transfer quality:** near transfer must feel like the same move; far transfer must name the shared structure. No forced metaphors.
 
+**Write the gate down.** Each card carries an integer `importanceScore` 0–10 — the same judgement as above, quantified: **8–10** a usable core (decision rule, failure it prevents, transferable pattern), **4–7** useful supporting detail, **1–3** nice-to-know, **0** trivia you would cut. A batch where everything scores 8+ means the gate was not really applied. Rubric: SKILL.md hard constraint 13.
+
 **Rewrite habit:** "什么是 X？" → prefer "在 [框架/处境] 里，X 解决什么问题？" / "这个处境下为什么需要 X？" / "给定这个具体场景，下一步？" / "同一模式还能用在哪个点得着的同类场景？" when the source allows. See §13.
 
 ## 1. Understand before memorizing
