@@ -16,8 +16,9 @@
  *     login even if a token is already set
  */
 import { execFile } from 'node:child_process';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { isMainEntry } from '../lib/is-main.mjs';
 import {
   bootstrapEnv,
   hasFlashcardApiKey,
@@ -216,14 +217,6 @@ async function main() {
   }
 }
 
-function isMain() {
-  try {
-    return import.meta.url === pathToFileURL(resolve(process.argv[1] || '')).href;
-  } catch {
-    return false;
-  }
-}
-
-if (isMain()) {
+if (isMainEntry(import.meta.url)) {
   void main();
 }

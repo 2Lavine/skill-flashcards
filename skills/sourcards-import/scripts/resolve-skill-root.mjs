@@ -9,9 +9,9 @@
  * Keep the SKILL.md heredoc in sync with findSkillRoot.
  */
 import { existsSync, realpathSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
-import { pathToFileURL } from 'node:url';
+import { isMainEntry } from '../lib/is-main.mjs';
 
 export function findSkillRoot(name, marker, cwd = process.cwd()) {
   const hits = [];
@@ -46,15 +46,7 @@ export function findSkillRoot(name, marker, cwd = process.cwd()) {
   return hits;
 }
 
-function isMain() {
-  try {
-    return import.meta.url === pathToFileURL(resolve(process.argv[1] || '')).href;
-  } catch {
-    return false;
-  }
-}
-
-if (isMain()) {
+if (isMainEntry(import.meta.url)) {
   const name = process.argv[2] || 'sourcards-import';
   const marker = process.argv[3] || 'scripts/lint-cards.mjs';
   const hits = findSkillRoot(name, marker);
