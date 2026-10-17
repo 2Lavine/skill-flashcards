@@ -34,9 +34,10 @@ Pre-import JSON lint is a different skill: **`sourcards-import`**.
 ### A. Complete exported snapshot
 
 Ask the user for a complete library organization snapshot, then lint it locally.
-Personal Integration Tokens do **not** authorize `GET /api/library-lint`, and the
-owner-scoped `catalog:read` deck/category endpoints do not include enough card
-counts or uncategorized data to reconstruct this snapshot.
+`GET /api/library-lint` (`catalog:read`) returns that snapshot and no card bodies.
+`GET /api/decks` and `GET /api/categories` still omit the counts this lint needs.
+This skill does not rename or merge. Confirmed category changes go through
+`sourcards-library-organize`.
 
 `SKILL_ROOT` is the directory of this SKILL.md. Do not pick among install layouts. If you were not given that path:
 

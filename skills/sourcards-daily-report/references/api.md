@@ -13,6 +13,7 @@ imports:read
 imports:rollback
 media:upload
 catalog:read
+catalog:write
 stats:read
 ```
 

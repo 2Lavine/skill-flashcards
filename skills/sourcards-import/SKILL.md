@@ -268,8 +268,9 @@ node "$SKILL_ROOT/scripts/login.mjs" --check
   Then re-run `--check`. Never `cat` `.env.local`.
 
 Token scopes are `imports:create|read|rollback`, `media:upload`,
-`catalog:read`, `stats:read` — no card bodies, reviews, Coach, settings,
-billing, or account APIs. `upload-media` uses this token against
+`catalog:read|write`, `stats:read` — no card bodies, reviews, Coach, settings,
+billing, or account APIs. `catalog:write` only renames or merges categories;
+that workflow is `sourcards-library-organize`. `upload-media` uses this token against
 `https://sourcard.sourmonkey.xyz/api/media` unless a BYO host is configured.
 Lite/Lifetime can upload; Free gets 403 and must use `--provider github`.
 

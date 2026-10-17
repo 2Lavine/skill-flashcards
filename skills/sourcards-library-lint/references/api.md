@@ -2,25 +2,24 @@
 
 ## Input source
 
-The outer-agent CLI is snapshot-only. Ask the user to export and provide a
-complete library organization snapshot; do not attempt to authenticate the CLI
-to a live account.
+The outer-agent CLI is snapshot-only. It does not call the API.
 
-`GET /api/library-lint` is session-only and is **not** on the Personal
-Integration Token allowlist. Personal Integration Tokens (`sc_int_…`, env
-`FLASHCARD_API_KEY`) cover only:
+`GET /api/library-lint` accepts a session or a Personal Integration Token with
+`catalog:read`. Fetching that route belongs to `sourcards-library-organize`
+(`scripts/fetch-library-lint.mjs`). The token allowlist is:
 
 | Method | Path | Permission |
 |--------|------|------------|
 | `POST` | `/api/import` | `imports:create` |
 | `POST` | `/api/media` | `media:upload` |
-| `GET` | `/api/decks`, `/api/categories` | `catalog:read` |
+| `GET` | `/api/decks`, `/api/categories`, `/api/library-lint` | `catalog:read` |
+| `PUT` | `/api/categories/rename`, `/api/categories/merge` | `catalog:write` |
 | `GET` | `/api/imports` | `imports:read` |
 | `POST` | `/api/imports/:id/rollback` | `imports:rollback` |
 
-The `catalog:read` responses are not a substitute for the export: they do not
-provide all card counts and uncategorized aggregates required by organization
-lint. Do not claim that those endpoints can reconstruct a complete snapshot.
+`GET /api/decks` and `GET /api/categories` do not include the card counts or
+uncategorized aggregates this lint needs. `GET /api/library-lint` does. The
+lint CLI still reads a local snapshot file and does not call either route.
 
 ## Snapshot shape
 

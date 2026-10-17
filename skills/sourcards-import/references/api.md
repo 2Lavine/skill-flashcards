@@ -5,7 +5,8 @@
 Import, media, catalog, and batch recovery all use a **Personal Integration Token**
 (prefix `sc_int_…`). This is **not** a login session and is **not** a general API key.
 
-Default permissions on every new token (exactly six):
+Default permissions on every new token (exactly seven). A token minted earlier
+does not gain `catalog:write` until it is replaced (`login.mjs --force`).
 
 ```text
 imports:create
@@ -13,6 +14,7 @@ imports:read
 imports:rollback
 media:upload
 catalog:read
+catalog:write
 stats:read
 ```
 
@@ -24,6 +26,9 @@ stats:read
 | `POST` | `/api/media` | `media:upload` |
 | `GET` | `/api/decks` | `catalog:read` |
 | `GET` | `/api/categories` | `catalog:read` |
+| `GET` | `/api/library-lint` | `catalog:read` |
+| `PUT` | `/api/categories/rename` | `catalog:write` |
+| `PUT` | `/api/categories/merge` | `catalog:write` |
 | `GET` | `/api/imports` | `imports:read` |
 | `POST` | `/api/imports/:id/rollback` | `imports:rollback` |
 | `GET` | `/api/stats` | `stats:read` |
@@ -206,6 +211,10 @@ Header: x-api-key: $FLASHCARD_API_KEY
 
 Requires `catalog:read`. Used by `lint-cards --catalog` to cross-check deck /
 category names against the owner's library. Does **not** return card bodies.
+
+`GET /api/library-lint` is the organization snapshot (counts, uncategorized
+totals, issue list). It also returns no card bodies. Category rename and merge
+(`catalog:write`) are applied by `sourcards-library-organize`, not by import.
 
 ## Rollback / Delete a Batch
 
