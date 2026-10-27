@@ -11,7 +11,7 @@
  *   "title": "偏差-方差权衡，一篇讲透",    // cover title (XHS post title hook)
  *   "countLabel": "3 张卡片",            // optional, defaults from cards length
  *   "layout": "cover+cards",             // "cover+cards" (default) | "cards"
- *   "cardMode": "split",                  // separate Q/A images; default combined
+ *   "cardMode": "split",                  // default: separate q/a pages; "combined" = one page
  *   "footerLabel": "偏差-方差权衡",        // optional small footer on card pages
  * }
  *
@@ -110,7 +110,7 @@ async function main() {
       }),
     });
   }
-  const split = spec.cardMode === "split";
+  const split = spec.cardMode !== "combined"; // split is the default
   let page = jobs.length;
   spec.cards.forEach((card, i) => {
     const sides = split ? ["question", "answer"] : ["both"];

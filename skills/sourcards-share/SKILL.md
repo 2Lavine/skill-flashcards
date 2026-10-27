@@ -113,9 +113,10 @@ Hashtags: 3–5, topic-first, then one learning-method tag, e.g.
 - `layout`: `"cover+cards"` (default; cover + one image per card) or
   `"cards"` (no cover). Max 8 images total per Xiaohongshu post — keep
   cards ≤5 so there is room for the cover.
-- `cardMode`: `"split"` emits a question page then an answer page for every
-  card (`02-q.png`, `03-a.png`, …). Omit it for the original combined Q/A
-  page. For a multi-card split post, keep total images within the platform cap.
+- `cardMode`: default `"split"` emits a question page then an answer page
+  for every card (`02-q.png`, `03-a.png`, …). Set `"combined"` for the
+  old one-page Q/A layout. Keep total images within the platform cap
+  (cover + 2×cards ≤ 8, so ≥3 cards per post in split mode).
 - Use the cards' ORIGINAL `question`/`answer` text. Cloze cards are fill-in
   exercises: the Q page shows the sentence with blank underlines; the A page
   shows the same sentence with each answer filled in and underlined (answers
