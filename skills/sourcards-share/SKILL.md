@@ -198,18 +198,46 @@ and re-render.
 
 ## Editing this skill (APM — read before patching)
 
-This skill is installed by **APM**, not hand-managed. `~/.agents/skills/…`,
-`~/.claude/skills/…` and `~/.config/opencode/skills/…` are **generated
-copies**: `apm install -g` re-materialises them from the source checkout at
-`~/.apm/apm_modules/2Lavine/skill-flashcards/skills/sourcards-share/`, which
-is itself fetched from the `2Lavine/skill-flashcards` git repo.
+This skill has **four** copies on disk and only one of them is source. Editing
+the wrong one is silently reverted — that has already cost a full afternoon of
+typography fixes once.
 
-So a patch applied only to a distributed copy is **silently reverted** on the
-next `apm install` / sync. Correct order:
+Real source — edit here:
 
-1. Edit the source checkout under `~/.apm/apm_modules/2Lavine/skill-flashcards/`.
-2. Copy the changed files into the three distribution targets (or run
-   `~/.apm/bridge.sh --prune`).
-3. To survive the next fetch, the change must be committed and pushed to
-   `2Lavine/skill-flashcards` — otherwise step 1 is a local-only patch with a
-   half-life of one `apm install`.
+```
+fsrs-flashcards/                                    (2Lavine/fsrs-flashcards)
+└─ packages/platform/skill-flashcards/              git SUBMODULE
+   └─ skills/sourcards-share/                       (2Lavine/skill-flashcards)
+```
+
+Generated copies — never edit:
+
+| Path | What it is |
+|------|------------|
+| `~/.apm/apm_modules/2Lavine/skill-flashcards/` | APM's own checkout of the same repo; `apm install -g` re-fetches it from GitHub |
+| `~/.agents/skills/`, `~/.claude/skills/`, `~/.config/opencode/skills/` | APM distribution targets (the paths the harness actually loads) |
+| `fsrs-flashcards/.agents/skills/sourcards-share` | symlink into the submodule — picks up edits automatically |
+
+Correct order:
+
+1. Edit the submodule: `packages/platform/skill-flashcards/skills/sourcards-share/`.
+2. Commit and push **inside the submodule** (`2Lavine/skill-flashcards`, branch `main`).
+3. In the monorepo: stage the gitlink, sync the Docker pin, commit both —
+
+   ```bash
+   git add packages/platform/skill-flashcards
+   pnpm skill:sync-pin                      # writes packages/platform/skill-flashcards.sha
+   git add packages/platform/skill-flashcards.sha
+   git commit -m "chore(skill): bump skill-flashcards"
+   ```
+
+   (the monorepo's `pre-commit` hook re-syncs and re-stages the pin, and
+   `pnpm skill:check` verifies the whole chain).
+4. Only then mirror into the APM targets if you want the local harness to pick
+   it up immediately: copy `scripts/*.mjs` + `SKILL.md` into
+   `~/.apm/apm_modules/2Lavine/skill-flashcards/skills/sourcards-share/` and the
+   three `~/.agents` / `~/.claude` / `~/.config` targets.
+
+Pushing to `2Lavine/skill-flashcards` without bumping the monorepo leaves the
+submodule pointing at the old commit — the repo looks fine on GitHub and the
+local checkout is stale. Both repos must move together.
