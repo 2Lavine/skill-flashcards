@@ -99,8 +99,17 @@ Hashtags: 3–5, topic-first, then one learning-method tag, e.g.
 {
   "kicker": "机器学习",
   "title": "过拟合总治不好？先分清偏差和方差",
-  "layout": "cover+cards",
+  "layout": "cover+overview+cards",
   "footerLabel": "偏差-方差权衡",
+  "overview": {
+    "label": "偏差-方差的三层",
+    "items": [
+      "偏差高 = 欠拟合，模型太笨",
+      "方差高 = 过拟合，模型太敏感",
+      "总误差 = 偏差² + 方差 + 噪声"
+    ],
+    "note": "机器学习笔记 · 偏差-方差权衡"
+  },
   "cards": [
     { "question": "第一张卡的 question 原文", "answer": "第一张卡的 answer 原文" }
   ]
@@ -108,24 +117,48 @@ Hashtags: 3–5, topic-first, then one learning-method tag, e.g.
 ```
 
 - `title`: cover title — short version of the post title if that is >20 chars.
+  The cover auto-breaks at a punctuation boundary when greedy wrapping would
+  leave a stub line, so `明知道该改，为什么改不掉` becomes `明知道该改，` /
+  `为什么改不掉` instead of `…为什么改` / `不掉`.
 - `kicker`: category or deck (≤8 chars looks best).
 - `footerLabel`: topic line on card pages; optional.
-- `layout`: `"cover+cards"` (default; cover + one image per card) or
-  `"cards"` (no cover). Max 8 images total per Xiaohongshu post — keep
-  cards ≤5 so there is room for the cover.
+- `layout`: `"cover+cards"` (default; cover + N card images),
+  `"cover+overview+cards"` (adds the agenda page), or `"cards"` (no cover).
+- `overview`: optional agenda page between cover and cards — `label`
+  (headline), `items` (2–4 one-line bullets, auto-numbered `01/02/03`),
+  `note` (attribution, printed at the bottom on the cards' footer baseline).
+  **Use it whenever the post has ≥3 cards.** Without it the set reads as N
+  unrelated cards rather than one argument; with it the reader gets the
+  structure before any single Q/A. Skip for 1–2 cards.
 - `cardMode`: default `"split"` emits a question page then an answer page
   for every card (`02-q.png`, `03-a.png`, …). Set `"combined"` for the
-  old one-page Q/A layout. Keep total images within the platform cap
-  (cover + 2×cards ≤ 8, so ≥3 cards per post in split mode).
-- Use the cards' ORIGINAL `question`/`answer` text. Cloze cards are fill-in
-  exercises: the Q page shows the sentence with blank underlines; the A page
-  shows the same sentence with each answer filled in and underlined (answers
-  never wrap — they move whole to the next line). `$...$` / `$$...$$` and
-  bare semicolon-separated TeX (`\\text{Bias}^2; …`) are typeset with
-  MathJax; markdown media becomes `[图片]`/`[音频]` placeholders.
-  Card content blocks are vertically centered, so short cards look balanced
-  without manual padding. You MAY lightly shorten an over-long answer for
-  the poster, but never change the meaning.
+  old one-page Q/A layout. Image budget: split costs two pages per card,
+  so 3–4 cards + cover + overview (8–10 images) is the comfortable size.
+- **Both sides are labelled with a filled accent badge** (`Q 问题` / `A 答案`)
+  rather than a thin letter, so the two sides stay distinguishable in the
+  feed's thumbnail strip. The answer page also **reprints the question** as a
+  muted, rule-marked pull-quote above the answer: the reader arrives there by
+  scrolling past a full-screen image and has lost the prompt. Cloze cards skip
+  the recap — their answer side already reprints the whole sentence.
+- Base Q/A on the cards' original text, but **situate the question**. A card's
+  question is written for spaced repetition: the reviewer already has the
+  context, so a bare "什么是X？" is enough. The poster reader has none, so the
+  Q page opens with a concrete situation and only then asks:
+  `一个人明明知道自己在毁掉生活，为什么还是不动？Rich Roll 酗酒二十年，
+  他说转折点不是某次清醒，那到底是什么？` Two to three lines at 56px is the
+  target — a one-line question wastes the whole page. Re-frame freely, but
+  invent no facts.
+- Answers: conclusion first, then mechanism, then the落点, separated by `\n`
+  — every newline renders as a paragraph gap, which is what keeps a 44px
+  answer readable on a phone. A single blob reads as a wall.
+- Cloze cards are fill-in exercises: the Q page shows the sentence with blank
+  underlines; the A page shows the same sentence with each answer filled in
+  and underlined (answers never wrap — they move whole to the next line).
+  `$...$` / `$$...$$` and bare semicolon-separated TeX (`\\text{Bias}^2; …`)
+  are typeset with MathJax; markdown media becomes `[图片]`/`[音频]`
+  placeholders. Card content blocks are vertically centered, so short cards
+  look balanced without manual padding. You MAY lightly shorten an over-long
+  answer for the poster, but never change the meaning.
 
 ## Step 4 — Render
 
@@ -136,8 +169,9 @@ node <skill-root>/scripts/render.mjs share-spec.json --out out/<topic>/ [--scale
 - `sharp` and `mathjax-full` must be installed once:
   `npm i -g sharp mathjax-full` (recommended), or add both in the workspace.
   The scripts resolve CWD-local first, then global.
-- Output: `01-cover.png`, `02-card.png`, … each 1242x1660 (3:4).
-  `--scale 2` doubles resolution for crisper uploads.
+- Output: `01-cover.png`, `02-overview.png` (when `overview` is set),
+  `03-q.png` / `04-a.png` … each 1242x1660 (3:4). `--scale 2` doubles
+  resolution for crisper uploads.
 - `share-spec.used.json` is copied into the output dir for reproducibility.
 
 ## Step 5 — Human check, then publish manually
@@ -148,9 +182,10 @@ ALWAYS show the user before declaring done:
 
 The user publishes manually in Xiaohongshu: upload images in filename order,
 paste title/body/hashtags. There is no publish API — do not promise
-auto-posting. Ask the user to check the cover line breaks; if the title
-wraps awkwardly (e.g. a single character on the last line), shorten the
-title and re-render.
+auto-posting. Cover line breaks are auto-balanced at punctuation, but still
+look at the rendered cover: if the title had to break at a comma, the second
+line should not be much shorter than the first. If it is, shorten `title`
+and re-render.
 
 ## Limitations (be upfront)
 
@@ -160,3 +195,21 @@ title and re-render.
   skip those cards instead.
 - Long cards are truncated at the renderer's line budget; prefer concise
   cards or shorten the poster text in the spec.
+
+## Editing this skill (APM — read before patching)
+
+This skill is installed by **APM**, not hand-managed. `~/.agents/skills/…`,
+`~/.claude/skills/…` and `~/.config/opencode/skills/…` are **generated
+copies**: `apm install -g` re-materialises them from the source checkout at
+`~/.apm/apm_modules/2Lavine/skill-flashcards/skills/sourcards-share/`, which
+is itself fetched from the `2Lavine/skill-flashcards` git repo.
+
+So a patch applied only to a distributed copy is **silently reverted** on the
+next `apm install` / sync. Correct order:
+
+1. Edit the source checkout under `~/.apm/apm_modules/2Lavine/skill-flashcards/`.
+2. Copy the changed files into the three distribution targets (or run
+   `~/.apm/bridge.sh --prune`).
+3. To survive the next fetch, the change must be committed and pushed to
+   `2Lavine/skill-flashcards` — otherwise step 1 is a local-only patch with a
+   half-life of one `apm install`.

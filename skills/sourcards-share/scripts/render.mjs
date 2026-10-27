@@ -10,9 +10,14 @@
  *   "kicker": "机器学习",                // optional, cover chip (deck/category)
  *   "title": "偏差-方差权衡，一篇讲透",    // cover title (XHS post title hook)
  *   "countLabel": "3 张卡片",            // optional, defaults from cards length
- *   "layout": "cover+cards",             // "cover+cards" (default) | "cards"
+ *   "layout": "cover+overview+cards",    // "cover+cards" (default) | "cover+overview+cards" | "cards"
  *   "cardMode": "split",                  // default: separate q/a pages; "combined" = one page
  *   "footerLabel": "偏差-方差权衡",        // optional small footer on card pages
+ *   "overview": {                         // optional agenda page after the cover
+ *     "label": "改变的三件事",             //   headline
+ *     "items": ["…", "…", "…"],           //   2–4 one-line bullets
+ *     "note": "Rich Roll × Scott Galloway" //   attribution, pinned to the bottom
+ *   }
  * }
  *
  * Output: <out>/01-cover.png, 02-card.png ... plus a copy of the spec.
@@ -24,7 +29,7 @@ import { execSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { buildCardSvg, buildCoverSvg } from "./poster-svg.mjs";
+import { buildCardSvg, buildCoverSvg, buildOverviewSvg } from "./poster-svg.mjs";
 import { loadMathRenderer } from "./math-svg.mjs";
 
 
@@ -112,6 +117,12 @@ async function main() {
   }
   const split = spec.cardMode !== "combined"; // split is the default
   let page = jobs.length;
+  if (spec.overview) {
+    jobs.push({
+      name: `${pad(++page)}-overview.png`,
+      svg: buildOverviewSvg(spec.overview),
+    });
+  }
   spec.cards.forEach((card, i) => {
     const sides = split ? ["question", "answer"] : ["both"];
     for (const side of sides) {
