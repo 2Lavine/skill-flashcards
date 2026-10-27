@@ -661,7 +661,7 @@ export function buildCardSvg({
   const qSpan = (qLines.length - 1) * qLineH;
   const aSpan = (aLines.length - 1) * aLineH;
   const GAP_AFTER_Q = 96; // clears the underline, then air before the rule
-  const A_MARK_H = 150; // badge offset + badge + gap to the answer text
+  const A_MARK_H = 158; // badge offset + badge + gap to the answer text
   const capTop = 44; // cap height of 56px type
   const descender = 20;
   const blockH = capTop + qSpan + GAP_AFTER_Q + A_MARK_H + aSpan + descender;
@@ -669,7 +669,7 @@ export function buildCardSvg({
   const qStartY = Math.round(top + capTop);
   const dividerY = qStartY + qSpan + GAP_AFTER_Q;
   const aBadgeTop = dividerY + 22;
-  const aStartY = aBadgeTop + 112;
+  const aStartY = aBadgeTop + 136;
   const qAttrs = `font-size="56" font-weight="600" fill="${THEME.ink}"`;
   const aAttrs = `font-size="44" fill="${THEME.body}"`;
 
