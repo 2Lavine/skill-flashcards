@@ -3,6 +3,8 @@
 把学习材料变成 FSRS 间隔复习卡片的**外部 agent 技能包**（Codex plugin / multi-skill pack）。
 制卡、校验、导入、回滚——全部通过开放 API，不依赖 App 内 Coach。
 
+**官网与产品页：[sourcard.sourmonkey.xyz/site](https://sourcard.sourmonkey.xyz/site)（中文）/ [English](https://sourcard.sourmonkey.xyz/en)**
+
 人读新手页（浏览器打开，Agent 不用读）：[`skills/sourcards-import/getting-started.html`](skills/sourcards-import/getting-started.html)
 
 - 插件名：**`skill-flashcards`**；npm 包（可选）：**`@sourcards/skill-flashcards`**
