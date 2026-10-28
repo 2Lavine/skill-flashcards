@@ -12,6 +12,7 @@
 - 辅助技能：**`sourcards-library-lint`**（只读审计）
 - 整理技能：**`sourcards-library-organize`**（确认后改名/合并分类）
 - 报表技能：**`sourcards-daily-report`**
+- 复盘技能：**`sourcards-retro`**
 
 ## 能帮你做什么
 
@@ -25,11 +26,12 @@
 | 审计已有牌库（重名/空组/未分类漂移） | `sourcards-library-lint` → `lint-library` | 完整牌库快照（导出） |
 | 确认后改名或合并已有分类 | `sourcards-library-organize` → `apply-library-plan` | Personal Integration Token（`catalog:write`，新令牌） |
 | 拉取每日复习统计/生成报表（含 cron 定时） | `sourcards-daily-report` → `fetch-daily-report` | Personal Integration Token（`stats:read`） |
+| 写某一天的复习复盘（含当天刷过的题面） | `sourcards-retro` → `fetch-retro` | Personal Integration Token（`stats:read`） |
 
-能力边界（**令牌做不到的**）：不创建登录会话；不能访问卡片正文（导入 payload 之外）、
-原始复习日志（raw review logs）、Coach 或 LLM、设置/计费/账户、以及本表之外任何路由。
-令牌可以读取**聚合复习统计**（`/api/stats`、`/api/daily-counts`、`/api/streak`，`stats:read`），
-按会员等级每日配额计量（Free 100 次/天，Lite/Lifetime 5000 次/天）。
+能力边界（**令牌做不到的**）：不创建登录会话；不能读卡片答案，也不能整库导出卡片正文。
+`stats:read` 可以读聚合统计，以及某一本地日的复习行（题面、评分、牌组、分类、时间，
+`GET /api/review-logs`）。不能访问 Coach 或 LLM、设置/计费/账户、番茄钟时长，以及本表之外任何路由。
+配额按会员等级每日计量（Free 100 次/天，Lite/Lifetime 5000 次/天）。
 
 ## 30 秒跑通一个导入
 
@@ -65,7 +67,7 @@ Personal Integration Token（前缀 `sc_int_…`）新令牌默认七个权限�
 | `media:upload` | `POST /api/media` | 官方媒体上传（需账户 `media:upload` 权益与配额） |
 | `catalog:read` | `GET /api/decks`, `GET /api/categories`, `GET /api/library-lint` | 读取牌组/分类，以及不含卡片正文的组织快照 |
 | `catalog:write` | `PUT /api/categories/rename`, `PUT /api/categories/merge` | 在同一牌组内改名或合并分类 |
-| `stats:read` | `GET /api/stats`, `GET /api/daily-counts`, `GET /api/streak` | 读取聚合复习统计 |
+| `stats:read` | `GET /api/stats`, `GET /api/daily-counts`, `GET /api/streak`, `GET /api/review-logs` | 聚合复习统计，以及某一本地日的复习行（题面，无答案） |
 
 > 令牌鉴权用 `x-api-key: $FLASHCARD_API_KEY` 或 `Authorization: Bearer …`。
 > 完整字段/响应细节见 [api.md](skills/sourcards-import/references/api.md)。

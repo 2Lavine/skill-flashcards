@@ -32,9 +32,11 @@ calendar day (`/api/stats?localDay=…`, `/api/streak?localDay=…`,
 
 ### What the token cannot do
 
-Tokens never create authenticated sessions and **cannot** access card bodies,
-raw review logs, Coach data, settings, billing, or any endpoint outside the
-approved table (see `sourcards-import/references/api.md` for the full token rules).
+This skill calls only the three aggregate routes above. A token with the same
+`stats:read` scope can also page one local day's question fronts at
+`GET /api/review-logs` — that belongs to `sourcards-retro`, not this report.
+Tokens still cannot read answers, Coach, settings, or billing
+(see `sourcards-import/references/api.md`).
 
 ## Request quota
 

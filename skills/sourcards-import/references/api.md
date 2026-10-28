@@ -34,19 +34,22 @@ stats:read
 | `GET` | `/api/stats` | `stats:read` |
 | `GET` | `/api/daily-counts` | `stats:read` |
 | `GET` | `/api/streak` | `stats:read` |
+| `GET` | `/api/review-logs` | `stats:read` |
 
 Every route verifies **exactly** that permission and derives the owner from the
-token `referenceId`. All reads and mutations are **owner-scoped**. The `stats:*`
-routes return only the owner's aggregate review statistics — see the
-`sourcards-daily-report` skill for fetching them as a daily report.
+token `referenceId`. All reads and mutations are **owner-scoped**. Aggregate
+`stats:read` routes are the `sourcards-daily-report` skill.
+`GET /api/review-logs` pages one local day's review rows (question front, rating,
+deck, category, time). It does not return answers. Field list and timezone
+window: `sourcards-retro` `references/api.md`.
 
 ### What the token cannot do
 
 Tokens never create authenticated sessions and **cannot** access:
 
-- card bodies (beyond what the import payload itself contains)
-- reviews / FSRS state (raw review logs are not exposed to tokens; aggregate
-  `/api/stats` etc. above are)
+- card answers, or a dump of the whole library (the only card text a token can
+  read is the question front on `GET /api/review-logs`, one local day at a time)
+- FSRS schedule fields on review rows (that route returns rating, state, time)
 - Coach data or LLM generation
 - settings, billing, account, or admin surfaces
 - any route outside the table above
