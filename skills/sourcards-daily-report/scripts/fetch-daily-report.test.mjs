@@ -159,3 +159,21 @@ test('rejects bad usage (--days out of range, unknown flag) with exit 2', async 
   const badFlag = await run(['--nope']);
   assert.equal(badFlag.code, 2);
 });
+
+test('a past --localDay takes the day total from daily-counts, not stats.today', async () => {
+  const { code, out } = await run(['--localDay', '2026-08-11'], {
+    handler: (req, res) => {
+      // /api/stats.today is a current-day counter and reads 0 for a past day.
+      if (req.url.startsWith('/api/stats')) return json(res, { ...statsPayload, today: 0 });
+      if (req.url.startsWith('/api/daily-counts')) return json(res, countsPayload);
+      if (req.url.startsWith('/api/streak')) return json(res, streakPayload);
+      res.writeHead(404);
+      res.end('not found');
+    },
+  });
+  assert.equal(code, 0);
+  assert.match(out, /## 2026-08-11 概览/);
+  assert.match(out, /当日（2026-08-11）复习：\*\*9\*\*/);
+  assert.match(out, /当前连续天数：5 天/);
+  assert.doesNotMatch(out, /今日复习：\*\*0\*\*/);
+});

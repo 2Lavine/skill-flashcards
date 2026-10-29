@@ -32,11 +32,20 @@ calendar day (`/api/stats?localDay=…`, `/api/streak?localDay=…`,
 
 ### What the token cannot do
 
-This skill calls only the three aggregate routes above. A token with the same
-`stats:read` scope can also page one local day's question fronts at
-`GET /api/review-logs` — that belongs to `sourcards-retro`, not this report.
-Tokens still cannot read answers, Coach, settings, or billing
-(see `sourcards-import/references/api.md`).
+The Markdown/JSON report calls only the three aggregate routes above. A token
+with the same `stats:read` scope can also page one local day's question fronts
+at `GET /api/review-logs` — that is what `scripts/fetch-daily-html.mjs` (and
+`sourcards-retro`) use. Tokens still cannot read answers, Coach, settings, or
+billing (see `sourcards-import/references/api.md`).
+
+Day semantics, which the aggregate routes get wrong if you pass a past day:
+
+| Field | Meaning | Past `localDay` |
+|-------|---------|-----------------|
+| `/api/stats` → `today` | counter for the CURRENT day only | reads 0 — use `/api/daily-counts` instead |
+| `/api/streak` → `streak` | streak as of today | reads 0 when the stored last day ≠ that day |
+| `/api/daily-counts` → `daily[].count` | per-day counter, historical | correct |
+| `/api/review-logs` | one day's rows, historical | correct (deleted cards missing) |
 
 ## Request quota
 

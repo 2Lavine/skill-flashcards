@@ -122,20 +122,30 @@ function fmtCount(n) {
   return typeof n === 'number' ? String(n) : '-';
 }
 
-function renderMarkdown(stats, dailyCounts, streak, rateInfo) {
+function renderMarkdown(stats, dailyCounts, streak, rateInfo, localDay) {
   const s = stats || {};
-  const today = s.today ?? 0;
   const totalReviews = s.totalReviews ?? 0;
   const perDay = (dailyCounts?.daily ?? []).map((d) => `${d.date}: ${d.count}`).join('\n');
+
+  // `/api/stats.today` is a CURRENT-day counter: it reads 0 for any past localDay.
+  // When a day is requested, take that day's number from /api/daily-counts instead.
+  const dayRow = localDay ? (dailyCounts?.daily ?? []).find((d) => d.date === localDay) : null;
+  const dayCount = localDay ? (dayRow ? dayRow.count : 0) : (s.today ?? 0);
+  const dayLine = localDay
+    ? `- 当日（${localDay}）复习：**${fmtCount(dayCount)}** 张`
+    : `- 今日复习：**${fmtCount(dayCount)}** 张`;
+  const streakLine = localDay
+    ? `- 当前连续天数：${fmtCount(streak?.streak)} 天（服务端只存当前值，不是该日历史值）`
+    : `- 连续天数：${fmtCount(streak?.streak)} 天`;
 
   const lines = [];
   lines.push('# 每日复习报表');
   lines.push('');
-  lines.push('## 今日概览');
+  lines.push(localDay ? `## ${localDay} 概览` : '## 今日概览');
   lines.push('');
-  lines.push(`- 今日复习：**${fmtCount(today)}** 张`);
+  lines.push(dayLine);
   lines.push(`- 累计复习：${fmtCount(totalReviews)} 张`);
-  lines.push(`- 连续天数：${fmtCount(streak?.streak)} 天`);
+  lines.push(streakLine);
   lines.push(`- 卡片总数：${fmtCount(s.total)}（待复习 ${fmtCount(s.due)}，学习中 ${fmtCount(s.learning)}，复习中 ${fmtCount(s.review)}）`);
   if (rateInfo.limit != null) {
     lines.push(`- 配额剩余：${rateInfo.remaining} / ${rateInfo.limit}（今日 API 次数）`);
@@ -185,7 +195,7 @@ async function main() {
       2,
     );
   } else {
-    output = renderMarkdown(statsRes.data, countsRes.data, streakRes.data, rateInfo);
+    output = renderMarkdown(statsRes.data, countsRes.data, streakRes.data, rateInfo, localDay);
   }
 
   if (outFile) {

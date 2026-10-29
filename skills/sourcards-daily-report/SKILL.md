@@ -9,8 +9,18 @@ Fetch daily review statistics for the token owner and render a report — one-sh
 (Markdown) or machine-readable (`--json` for cron / agent pipelines).
 
 **North star:** the report is a *progress snapshot*, not a substitute for the app.
-Keep it factual: numbers come straight from `/api/stats`, `/api/daily-counts`,
-`/api/streak`; never invent values the API did not return.
+Keep it factual: numbers come straight from the API; never invent values it did
+not return.
+
+Two outputs:
+
+| Output | Script | Data | Best for |
+|--------|--------|------|----------|
+| Markdown / JSON | `scripts/fetch-daily-report.mjs` | aggregate only (3 routes) | chat reply, cron JSON |
+| Self-contained HTML | `scripts/fetch-daily-html.mjs` | aggregate + that day's card rows + 14-day trend | 昨日日报, print/分享 |
+
+`fetch-daily-html.mjs` defaults to **yesterday** in the machine's timezone and
+writes `sourcards-daily-<YYYY-MM-DD>.html` (655 KB for ~1100 rows).
 
 ## Read on demand
 
@@ -21,6 +31,7 @@ Do **not** reload everything every time. Open only what the current step needs:
 | [USAGE.md](USAGE.md) | Human-facing usage: prerequisites, flags, quota, cron scheduling example |
 | [references/api.md](references/api.md) | Token scopes, endpoint shapes, quota headers, 429/401 handling |
 | [scripts/fetch-daily-report.mjs](scripts/fetch-daily-report.mjs) | Flag reference / exit codes before invoking the script |
+| [scripts/fetch-daily-html.mjs](scripts/fetch-daily-html.mjs) | HTML report: per-card rows, trend, dwell estimate, data-gap notes |
 
 ## Hard constraints
 
@@ -29,9 +40,14 @@ Do **not** reload everything every time. Open only what the current step needs:
    import skill's `scripts/login.mjs` (browser authorize, no copy) or point the
    user to `Settings → Integrations → Personal Integration Tokens → Create`
    (full value shown once).
-2. **stats:read only.** The script touches exactly three GET endpoints:
-   `/api/stats`, `/api/daily-counts`, `/api/streak`. Never ask for card bodies,
-   review logs, or any other endpoint — tokens cannot access them.
+2. **stats:read only.** Four GET routes, all covered by `stats:read`:
+   `/api/stats`, `/api/daily-counts`, `/api/streak` (aggregate script) and
+   `/api/review-logs` (card rows for the HTML script). Never ask for answers,
+   Coach, settings, or billing — tokens cannot read them.
+
+   **Past-day trap:** `stats.today` and `streak` are CURRENT-day counters. With a
+   past `--localDay` they read 0; take that day's total from
+   `/api/daily-counts` and label the streak as "current", never as "that day's".
 3. **Don't fabricate.** Render exactly what the API returned. `today`, `totalReviews`,
    `streak`, and the per-day counts are all owner-scoped server data.
 4. **Quota-aware.** Token access is metered by the membership daily request quota
@@ -54,6 +70,17 @@ Do **not** reload everything every time. Open only what the current step needs:
    node "$SKILL_ROOT/scripts/fetch-daily-report.mjs"
    node "$SKILL_ROOT/scripts/fetch-daily-report.mjs" --days 30
    ```
+
+   Yesterday's HTML report (per-card rows included):
+
+   ```bash
+   node "$SKILL_ROOT/scripts/fetch-daily-html.mjs" \
+     --localDay 2026-10-28 --tzOffsetMinutes 480 \
+     --out reports/sourcards-daily-2026-10-28.html
+   ```
+
+   Omit `--localDay` for yesterday; pass both day and offset when the machine's
+   timezone is not the user's (China = `480`).
 
 3. **Cron / pipeline reuse** — raw JSON with `stats` / `dailyCounts` / `streak`:
 

@@ -117,7 +117,10 @@ async function main() {
   const [statsRes, countsRes, streakRes] = await Promise.all([
     getJson(withQuery('/api/stats', { localDay })),
     getJson(withQuery('/api/daily-counts', { days, localDay })),
-    getJson(withQuery('/api/streak', { localDay })),
+    // Streak only exists as a CURRENT value: asking for a past localDay makes the
+    // server compare the stored last day against it and answer 0. Ask for the
+    // current streak instead, and label it 截至今天 in the Markdown.
+    getJson(withQuery('/api/streak', { localDay: localDay === localDayStamp() ? localDay : undefined })),
   ]);
 
   const logs = [];
@@ -180,13 +183,17 @@ async function main() {
 }
 
 function renderMarkdown(packet) {
-  const today = packet.stats?.today ?? '?';
+  // stats.today is a CURRENT-day counter; for a past --localDay it reads 0.
+  // The per-day counter is the only route that answers "how many on that day".
+  const dayRow = (packet.dailyCounts?.daily ?? []).find((d) => d.date === packet.localDay);
+  const dayTotal = dayRow ? dayRow.count : (packet.stats?.today ?? '?');
   const streak = packet.streak?.streak ?? '?';
+  const isCurrentDay = packet.localDay === localDayStamp();
   const lines = [
     `# ${packet.localDay} 复习数据`,
     '',
-    `- 今日复习：${today}`,
-    `- 连续天数：${streak}`,
+    `- 当日复习：${dayTotal}${dayRow ? '（每日计数）' : '（stats.today）'}`,
+    isCurrentDay ? `- 连续天数：${streak}` : `- 当前连续天数（截至今天）：${streak}`,
     `- 拉到的卡片行：${packet.reviews.count}${packet.reviews.truncated ? '（后面还有，已截断）' : ''}`,
     '- 番茄钟：服务端没有',
     '',

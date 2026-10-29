@@ -48,7 +48,9 @@ node "$SKILL_ROOT/scripts/fetch-retro.mjs" --localDay 2026-10-28 --tzOffsetMinut
 # YYYY-MM-DD 复习复盘
 
 ## 量
-- 今日复习 N 次（接口 `stats.today`）。连续 M 天。
+- 当日复习 N 次：优先取 `dailyCounts.daily` 里 `date == localDay` 的每日计数；
+  `stats.today` 只对「今天」有效，查历史日会读到 0（脚本已按此取数）。
+- 连续 M 天：这是**截至今天**的当前 streak；服务端不存「那一天的历史 streak」，不要反推。
 - 近 7 天每日次数照 `dailyCounts.daily` 列，并说今天相对这几天是多还是少。只在这些数字上比较。
 
 ## 今天刷过的卡
