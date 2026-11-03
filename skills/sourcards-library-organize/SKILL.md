@@ -1,11 +1,12 @@
 ---
 name: sourcards-library-organize
-description: Apply a user-confirmed category rename or merge to an existing SourCards library. Use when the user wants to 整理分类, rename categories, merge categories, or apply a library organization plan with their token. Not for a read-only audit (sourcards-library-lint) and not for pre-import cards.json (sourcards-import).
+description: Apply a user-confirmed organization plan (category rename/merge, deck rename/merge) to an existing SourCards library. Use when the user wants to 整理分类, rename categories, merge categories, 合并牌组, rename decks, or apply a library organization plan with their token. Not for a read-only audit (sourcards-library-lint) and not for pre-import cards.json (sourcards-import).
 ---
 
 # SourCards Library Organize
 
-Change category names on cards that are already in the library.
+Change category names on cards, or rename / merge whole decks, in a library that is
+already imported.
 
 Issue types, severity, and naming judgment stay in **`sourcards-library-lint`**
 (`references/org-rules.md`). This skill only turns a confirmed plan into API calls.
@@ -13,9 +14,9 @@ Issue types, severity, and naming judgment stay in **`sourcards-library-lint`**
 ## Hard constraints
 
 1. **Dry-run until the user confirms the exact plan** in this conversation. `--apply` is the only write.
-2. **Two operations only:** `rename_category`, `merge_category`. Both stay inside one deck.
-3. **No new taxonomy.** `newName` is an existing category name, or a typo fix the user accepted. No `/`.
-4. **Do not file uncategorized cards, edit card text, delete decks, or merge decks.** The token cannot read card bodies, so it cannot decide a category from the question.
+2. **Four operations only:** `rename_category`, `merge_category` (both stay inside one deck), `rename_deck`, `merge_deck` (whole-deck operations).
+3. **No new taxonomy.** For category ops, `newName` is an existing category name, or a typo fix the user accepted. For deck ops, `newName` is the target deck's new name. No `/` in any `newName`.
+4. **Do not file uncategorized cards, edit card text, or delete decks.** The token cannot read card bodies, so it cannot decide a category from the question. Deck merge is allowed (it moves cards, then removes the emptied source deck) — but never invent a new deck; merge into an existing name.
 5. **Stop on the first failed operation.** Say which earlier operations already landed.
 
 ## Read on demand
@@ -69,13 +70,15 @@ EOF
 node "$SKILL_ROOT/scripts/fetch-library-lint.mjs"
 ```
 
-2. Write `plan.json` with at most the clusters the user asked to clean. Prefer the better-populated existing name.
+2. Write `plan.json` with at most the clusters the user asked to clean. Prefer the better-populated existing name. Deck ops may use ids or deck names (names are resolved via `GET /api/decks` at apply time).
 
 ```json
 {
   "operations": [
     { "op": "rename_category", "deckId": "d1", "oldName": "心里学", "newName": "心理学" },
-    { "op": "merge_category", "deckId": "d1", "oldName": "认知偏差", "newName": "认知" }
+    { "op": "merge_category", "deckId": "d1", "oldName": "认知偏差", "newName": "认知" },
+    { "op": "rename_deck", "deckId": "d2", "newName": "新牌组名" },
+    { "op": "merge_deck", "sourceDeck": "l逻辑考", "targetDeck": "公考" }
   ]
 }
 ```

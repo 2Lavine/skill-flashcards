@@ -271,7 +271,7 @@ Token scopes are `imports:create|read|rollback`, `media:upload`,
 `catalog:read|write`, `stats:read`. `stats:read` also pages one local day's
 question fronts at `GET /api/review-logs` (`sourcards-retro`); it does not
 return answers. No Coach, settings, billing, or account APIs.
-`catalog:write` only renames or merges categories;
+`catalog:write` renames or merges categories, and renames or merges whole decks;
 that workflow is `sourcards-library-organize`. `upload-media` uses this token against
 `https://sourcard.sourmonkey.xyz/api/media` unless a BYO host is configured.
 Lite/Lifetime can upload; Free gets 403 and must use `--provider github`.

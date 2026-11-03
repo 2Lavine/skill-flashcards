@@ -29,6 +29,8 @@ stats:read
 | `GET` | `/api/library-lint` | `catalog:read` |
 | `PUT` | `/api/categories/rename` | `catalog:write` |
 | `PUT` | `/api/categories/merge` | `catalog:write` |
+| `PUT` | `/api/decks/:id/rename` | `catalog:write` |
+| `POST` | `/api/decks/:sourceId/merge-into/:targetId` | `catalog:write` |
 | `GET` | `/api/imports` | `imports:read` |
 | `POST` | `/api/imports/:id/rollback` | `imports:rollback` |
 | `GET` | `/api/stats` | `stats:read` |

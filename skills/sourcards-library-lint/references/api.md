@@ -14,6 +14,8 @@ The outer-agent CLI is snapshot-only. It does not call the API.
 | `POST` | `/api/media` | `media:upload` |
 | `GET` | `/api/decks`, `/api/categories`, `/api/library-lint` | `catalog:read` |
 | `PUT` | `/api/categories/rename`, `/api/categories/merge` | `catalog:write` |
+| `PUT` | `/api/decks/:id/rename` | `catalog:write` |
+| `POST` | `/api/decks/:sourceId/merge-into/:targetId` | `catalog:write` |
 | `GET` | `/api/imports` | `imports:read` |
 | `POST` | `/api/imports/:id/rollback` | `imports:rollback` |
 

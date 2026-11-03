@@ -10,7 +10,7 @@
 - 插件名：**`skill-flashcards`**；npm 包（可选）：**`@sourcards/skill-flashcards`**
 - 主技能：**`sourcards-import`**（原 `sourcards-flashcards`）
 - 辅助技能：**`sourcards-library-lint`**（只读审计）
-- 整理技能：**`sourcards-library-organize`**（确认后改名/合并分类）
+- 整理技能：**`sourcards-library-organize`**（确认后改名/合并分类、改名/合并牌组）
 - 报表技能：**`sourcards-daily-report`**
 - 复盘技能：**`sourcards-retro`**
 
@@ -24,7 +24,7 @@
 | 回滚导错的批次 | `sourcards-import` → `POST /api/imports/:id/rollback` | Personal Integration Token |
 | 本地图片/音频 → 线上 `https` 媒体 | `sourcards-import` → `upload-media` | token 或 GitHub BYO |
 | 审计已有牌库（重名/空组/未分类漂移） | `sourcards-library-lint` → `lint-library` | 完整牌库快照（导出） |
-| 确认后改名或合并已有分类 | `sourcards-library-organize` → `apply-library-plan` | Personal Integration Token（`catalog:write`，新令牌） |
+| 确认后改名或合并已有分类 / 牌组 | `sourcards-library-organize` → `apply-library-plan` | Personal Integration Token（`catalog:write`，新令牌） |
 | 拉取每日复习统计/生成报表（含 cron 定时） | `sourcards-daily-report` → `fetch-daily-report` | Personal Integration Token（`stats:read`） |
 | 写某一天的复习复盘（含当天刷过的题面） | `sourcards-retro` → `fetch-retro` | Personal Integration Token（`stats:read`） |
 
@@ -66,7 +66,7 @@ Personal Integration Token（前缀 `sc_int_…`）新令牌默认七个权限�
 | `imports:rollback` | `POST /api/imports/:id/rollback` | 回滚某批次 |
 | `media:upload` | `POST /api/media` | 官方媒体上传（需账户 `media:upload` 权益与配额） |
 | `catalog:read` | `GET /api/decks`, `GET /api/categories`, `GET /api/library-lint` | 读取牌组/分类，以及不含卡片正文的组织快照 |
-| `catalog:write` | `PUT /api/categories/rename`, `PUT /api/categories/merge` | 在同一牌组内改名或合并分类 |
+| `catalog:write` | `PUT /api/categories/rename`, `PUT /api/categories/merge`, `PUT /api/decks/:id/rename`, `POST /api/decks/:sourceId/merge-into/:targetId` | 在同一牌组内改名或合并分类；给牌组改名；把一张牌组合并进另一张 |
 | `stats:read` | `GET /api/stats`, `GET /api/daily-counts`, `GET /api/streak`, `GET /api/review-logs` | 聚合复习统计，以及某一本地日的复习行（题面，无答案） |
 
 > 令牌鉴权用 `x-api-key: $FLASHCARD_API_KEY` 或 `Authorization: Bearer …`。
@@ -93,10 +93,11 @@ Personal Integration Token（前缀 `sc_int_…`）新令牌默认七个权限�
 CLI 只接受完整牌库快照。线上快照是 `GET /api/library-lint`，由整理技能去拉。
 见 [SKILL.md](skills/sourcards-library-lint/SKILL.md)。
 
-### `sourcards-library-organize` — 确认后改分类
+### `sourcards-library-organize` — 确认后改分类 / 合并牌组
 
-只做同一牌组内的分类改名和合并。默认 dry-run，`--apply` 才写库。
-不能给未分类卡片自动归类，也不能删牌组或改卡片正文。
+只做同一牌组内的分类改名和合并，以及整张牌组的改名/合并。默认 dry-run，`--apply` 才写库。
+不能给未分类卡片自动归类，也不能删牌组或改卡片正文。牌组合并会把源牌组的卡挪进目标牌组、
+再删掉空掉的源牌组（`l逻辑考 → 公考` 这类重复牌组就靠它），也支持直接写牌组名自动解析 id。
 见 [SKILL.md](skills/sourcards-library-organize/SKILL.md)。
 
 ### `sourcards-daily-report` — 拉取每日复习报表
